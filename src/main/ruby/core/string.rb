@@ -276,6 +276,8 @@ class String
     str.tr!(source, replacement) || str
   end
 
+  Truffle::Graal.always_split(instance_method(:tr))
+
   def tr_s(source, replacement)
     str = dup
     str.tr_s!(source, replacement) || str

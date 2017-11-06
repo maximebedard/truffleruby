@@ -76,8 +76,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodings.constants.CharacterType;
 import org.jcodings.Encoding;
+import org.jcodings.constants.CharacterType;
 import org.jcodings.exception.EncodingException;
 import org.jcodings.specific.ASCIIEncoding;
 import org.jcodings.specific.USASCIIEncoding;
@@ -127,8 +127,12 @@ import org.truffleruby.core.rope.RopeNodes.MakeRepeatingNode;
 import org.truffleruby.core.rope.RopeNodesFactory;
 import org.truffleruby.core.rope.RopeOperations;
 import org.truffleruby.core.rope.SubstringRope;
+import org.truffleruby.core.string.StringNodesFactory.CountRopesNodeFactory;
+import org.truffleruby.core.string.StringNodesFactory.DeleteBangNodeFactory;
+import org.truffleruby.core.string.StringNodesFactory.DeleteBangRopesNodeFactory;
 import org.truffleruby.core.string.StringNodesFactory.StringAreComparableNodeGen;
 import org.truffleruby.core.string.StringNodesFactory.StringEqualNodeGen;
+import org.truffleruby.core.string.StringSupport.TrTables;
 import org.truffleruby.language.CheckLayoutNode;
 import org.truffleruby.language.NotProvided;
 import org.truffleruby.language.RubyGuards;
@@ -156,6 +160,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -754,53 +759,145 @@ public abstract class StringNodes {
     }
 
     @CoreMethod(names = "count", rest = true)
-    @ImportStatic(StringGuards.class)
     public abstract static class CountNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private EncodingNodes.CheckEncodingNode checkEncodingNode = EncodingNodesFactory.CheckEncodingNodeGen.create(null, null);
         @Child private ToStrNode toStr = ToStrNodeGen.create(null);
+        @Child private CountRopesNode countRopesNode = CountRopesNode.create();
+
+        @Specialization(guards = "args.length == size", limit = "getCacheLimit()")
+        public int count(VirtualFrame frame, DynamicObject string, Object[] args,
+                @Cached("args.length") int size) {
+            Rope[] ropes = argRopes(frame, args);
+            return countRopesNode.executeCount(string, ropes);
+        }
+
+        @Specialization(replaces = "count")
+        public int count(VirtualFrame frame, DynamicObject string, Object[] args) {
+            Rope[] ropes = argRopesSlow(frame, args);
+            return countRopesNode.executeCount(string, ropes);
+        }
+
+        @ExplodeLoop
+        protected Rope[] argRopes(VirtualFrame frame, Object[] args) {
+            Rope[] strs = new Rope[args.length];
+            for (int i = 0; i < args.length; i++) {
+                strs[i] = rope(toStr.executeToStr(frame, args[i]));
+            }
+            return strs;
+        }
+
+        protected Rope[] argRopesSlow(VirtualFrame frame, Object[] args) {
+            Rope[] strs = new Rope[args.length];
+            for (int i = 0; i < args.length; i++) {
+                strs[i] = rope(toStr.executeToStr(frame, args[i]));
+            }
+            return strs;
+        }
+
+        protected int getCacheLimit() {
+            return getContext().getOptions().DEFAULT_CACHE;
+        }
+    }
+
+    @ImportStatic(StringGuards.class)
+    public abstract static class CountRopesNode extends TrTableNode {
+
+        public static CountRopesNode create() {
+            return CountRopesNodeFactory.create(null);
+        }
+
+        public abstract int executeCount(DynamicObject string, Rope[] ropes);
 
         @Specialization(guards = "isEmpty(string)")
         public int count(DynamicObject string, Object[] args) {
             return 0;
         }
 
+        @Specialization(guards = { "!isEmpty(string)", "cachedArgs.length > 0",
+                "argsMatch(cachedArgs, args)", "encodingsMatch(string, cachedEncoding)"
+        })
+        public int countFast(DynamicObject string, Rope[] args,
+                @Cached(value = "args", dimensions = 1) Rope[] cachedArgs,
+                @Cached("encoding(string)") Encoding cachedEncoding,
+                @Cached(value = "makeSqueeze()", dimensions = 1) boolean[] squeeze,
+                @Cached("findEncoding(string, cachedArgs)") Encoding compatEncoding,
+                @Cached("makeTables(string, cachedArgs, squeeze, compatEncoding)") TrTables tables) {
+            return processStr(string, squeeze, compatEncoding, tables);
+        }
+
+        @TruffleBoundary
+        private int processStr(DynamicObject string, boolean[] squeeze, Encoding compatEncoding, TrTables tables) {
+            return StringSupport.strCount(rope(string), squeeze, tables, compatEncoding);
+        }
+
         @Specialization(guards = "!isEmpty(string)")
-        public int count(VirtualFrame frame, DynamicObject string, Object[] args,
+        public int count(DynamicObject string, Rope[] ropes,
                 @Cached("create()") BranchProfile errorProfile) {
-            if (args.length == 0) {
+            if (ropes.length == 0) {
                 errorProfile.enter();
                 throw new RaiseException(coreExceptions().argumentErrorEmptyVarargs(this));
             }
 
-            DynamicObject[] otherStrings = new DynamicObject[args.length];
-
-            for (int i = 0; i < args.length; i++) {
-                otherStrings[i] = toStr.executeToStr(frame, args[i]);
-            }
-
-            return countSlow(string, otherStrings);
+            Encoding enc = findEncoding(string, ropes);
+            return countSlow(string, ropes, enc);
         }
 
         @TruffleBoundary
-        private int countSlow(DynamicObject string, DynamicObject... otherStrings) {
+        private int countSlow(DynamicObject string, Rope[] ropes, Encoding enc) {
             assert RubyGuards.isRubyString(string);
 
-            DynamicObject otherStr = otherStrings[0];
-            Encoding enc = checkEncodingNode.executeCheckEncoding(string, otherStr);
-
             final boolean[]table = new boolean[StringSupport.TRANS_SIZE + 1];
-            StringSupport.TrTables tables = StringSupport.trSetupTable(rope(otherStr), table, null, true, enc);
-            for (int i = 1; i < otherStrings.length; i++) {
-                otherStr = otherStrings[i];
+            StringSupport.TrTables tables = makeTables(string, ropes, table, enc);
+            return processStr(string, table, enc, tables);
+        }
+    }
 
-                assert RubyGuards.isRubyString(otherStr);
+    public abstract static class TrTableNode extends CoreMethodArrayArgumentsNode {
+        @Child protected ToStrNode toStr = ToStrNodeGen.create(null);
+        @Child protected EncodingNodes.NegotiateCompatibleRopeEncodingNode checkEncodingNode = EncodingNodes.NegotiateCompatibleRopeEncodingNode.create();
 
-                enc = checkEncodingNode.executeCheckEncoding(string, otherStr);
-                tables = StringSupport.trSetupTable(rope(otherStr), table, tables, false, enc);
+        protected boolean[] makeSqueeze() {
+            return new boolean[StringSupport.TRANS_SIZE + 1];
+        }
+
+        protected Encoding findEncoding(DynamicObject string, Rope[] ropes) {
+            Rope rope = StringOperations.rope(string);
+            Encoding enc = checkEncodingNode.executeNegotiate(rope, ropes[0]);
+            for (int i = 1; i < ropes.length; i++) {
+                enc = checkEncodingNode.executeNegotiate(rope, ropes[i]);
             }
+            return enc;
+        }
 
-            return StringSupport.strCount(rope(string), table, tables, enc);
+        protected TrTables makeTables(DynamicObject string, Rope[] ropes, boolean[] squeeze, Encoding enc) {
+            StringSupport.TrTables tables = StringSupport.trSetupTable(ropes[0], squeeze, null, true, enc);
+
+            for (int i = 1; i < ropes.length; i++) {
+                tables = StringSupport.trSetupTable(ropes[i], squeeze, tables, false, enc);
+            }
+            return tables;
+        }
+
+        protected boolean encodingsMatch(DynamicObject string, Encoding encoding) {
+            return encoding == StringOperations.encoding(string);
+        }
+
+        protected Encoding encoding(DynamicObject string) {
+            return StringOperations.encoding(string);
+        }
+
+        @ExplodeLoop
+        protected boolean argsMatch(Rope[] cachedRopes, Rope[] ropes) {
+            if (cachedRopes.length != ropes.length) {
+                return false;
+            } else {
+                for (int i = 0; i < cachedRopes.length; i++) {
+                    if (cachedRopes[i] != ropes[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
     }
 
@@ -808,52 +905,75 @@ public abstract class StringNodes {
     @ImportStatic(StringGuards.class)
     public abstract static class DeleteBangNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private EncodingNodes.CheckEncodingNode checkEncodingNode = EncodingNodesFactory.CheckEncodingNodeGen.create(null, null);
         @Child private ToStrNode toStr = ToStrNodeGen.create(null);
+        @Child private DeleteBangRopesNode deleteBangRopesNode = DeleteBangRopesNode.create();
 
-        public abstract DynamicObject executeDeleteBang(VirtualFrame frame, DynamicObject string, Object[] args);
+        public static DeleteBangNode create() {
+            return DeleteBangNodeFactory.create(null);
+        }
+
+        public abstract DynamicObject executeDeleteBang(VirtualFrame frame, DynamicObject string,
+                Object[] args);
+
+        @Specialization(guards = "args.length == size", limit = "getCacheLimit()")
+        public DynamicObject deleteBang(VirtualFrame frame, DynamicObject string, Object[] args,
+                @Cached("args.length") int size) {
+            Rope[] ropes = argRopes(frame, args);
+            return deleteBangRopesNode.executeDeleteBang(string, ropes);
+        }
+
+        @Specialization(replaces = "deleteBang")
+        public DynamicObject deleteBangSlow(VirtualFrame frame, DynamicObject string, Object[] args) {
+            Rope[] ropes = argRopesSlow(frame, args);
+            return deleteBangRopesNode.executeDeleteBang(string, ropes);
+        }
+
+        @ExplodeLoop
+        protected Rope[] argRopes(VirtualFrame frame, Object[] args) {
+            Rope[] strs = new Rope[args.length];
+            for (int i = 0; i < args.length; i++) {
+                strs[i] = rope(toStr.executeToStr(frame, args[i]));
+            }
+            return strs;
+        }
+
+        protected Rope[] argRopesSlow(VirtualFrame frame, Object[] args) {
+            Rope[] strs = new Rope[args.length];
+            for (int i = 0; i < args.length; i++) {
+                strs[i] = rope(toStr.executeToStr(frame, args[i]));
+            }
+            return strs;
+        }
+
+        protected int getCacheLimit() {
+            return getContext().getOptions().DEFAULT_CACHE;
+        }
+    }
+
+    @ImportStatic(StringGuards.class)
+    public abstract static class DeleteBangRopesNode extends TrTableNode {
+
+        public static DeleteBangRopesNode create() {
+            return DeleteBangRopesNodeFactory.create(null);
+        }
+
+        public abstract DynamicObject executeDeleteBang(DynamicObject string, Rope[] ropes);
 
         @Specialization(guards = "isEmpty(string)")
         public DynamicObject deleteBangEmpty(DynamicObject string, Object[] args) {
             return nil();
         }
 
-        @Specialization(guards = "!isEmpty(string)")
-        public DynamicObject deleteBang(VirtualFrame frame, DynamicObject string, Object[] args,
-                @Cached("create()") BranchProfile errorProfile) {
-            if (args.length == 0) {
-                errorProfile.enter();
-                throw new RaiseException(coreExceptions().argumentErrorEmptyVarargs(this));
-            }
-
-            DynamicObject[] otherStrings = new DynamicObject[args.length];
-
-            for (int i = 0; i < args.length; i++) {
-                otherStrings[i] = toStr.executeToStr(frame, args[i]);
-            }
-
-            return deleteBangSlow(string, otherStrings);
-        }
-
-        @TruffleBoundary
-        private DynamicObject deleteBangSlow(DynamicObject string, DynamicObject[] otherStrings) {
-            assert RubyGuards.isRubyString(string);
-
-            DynamicObject otherString = otherStrings[0];
-            Encoding enc = checkEncodingNode.executeCheckEncoding(string, otherString);
-
-            boolean[] squeeze = new boolean[StringSupport.TRANS_SIZE + 1];
-            StringSupport.TrTables tables = StringSupport.trSetupTable(rope(otherString),
-                    squeeze, null, true, enc);
-
-            for (int i = 1; i < otherStrings.length; i++) {
-                assert RubyGuards.isRubyString(otherStrings[i]);
-
-                enc = checkEncodingNode.executeCheckEncoding(string, otherStrings[i]);
-                tables = StringSupport.trSetupTable(rope(otherStrings[i]), squeeze, tables, false, enc);
-            }
-
-            final Rope processedRope = StringSupport.delete_bangCommon19(rope(string), squeeze, tables, enc);
+        @Specialization(guards = { "!isEmpty(string)",
+                "argsMatch(cachedArgs, args)", "encodingsMatch(string, cachedEncoding)"
+        })
+        public DynamicObject deleteBangFast(DynamicObject string, Rope[] args,
+                @Cached(value = "args", dimensions = 1) Rope[] cachedArgs,
+                @Cached("encoding(string)") Encoding cachedEncoding,
+                @Cached(value = "makeSqueeze()", dimensions = 1) boolean[] squeeze,
+                @Cached("findEncoding(string, cachedArgs)") Encoding compatEncoding,
+                @Cached("makeTables(string, cachedArgs, squeeze, compatEncoding)") TrTables tables) {
+            final Rope processedRope = processStr(string, squeeze, compatEncoding, tables);
             if (processedRope == null) {
                 return nil();
             }
@@ -861,6 +981,42 @@ public abstract class StringNodes {
             StringOperations.setRope(string, processedRope);
 
             return string;
+        }
+
+        @Specialization(guards = "!isEmpty(string)")
+        public DynamicObject deleteBang(DynamicObject string, Rope[] args,
+                @Cached("create()") BranchProfile errorProfile) {
+            if (args.length == 0) {
+                errorProfile.enter();
+                throw new RaiseException(coreExceptions().argumentErrorEmptyVarargs(this));
+            }
+
+            Encoding enc = findEncoding(string, args);
+
+            return deleteBangSlow(string, args, enc);
+        }
+
+        @TruffleBoundary
+        private DynamicObject deleteBangSlow(DynamicObject string, Rope[] ropes, Encoding enc) {
+            assert RubyGuards.isRubyString(string);
+
+            boolean[] squeeze = new boolean[StringSupport.TRANS_SIZE + 1];
+
+            StringSupport.TrTables tables = makeTables(string, ropes, squeeze, enc);
+
+            final Rope processedRope = processStr(string, squeeze, enc, tables);
+            if (processedRope == null) {
+                return nil();
+            }
+
+            StringOperations.setRope(string, processedRope);
+
+            return string;
+        }
+
+        @TruffleBoundary
+        private Rope processStr(DynamicObject string, boolean[] squeeze, Encoding enc, StringSupport.TrTables tables) {
+            return StringSupport.delete_bangCommon19(rope(string), squeeze, tables, enc);
         }
     }
 
@@ -1826,23 +1982,24 @@ public abstract class StringNodes {
         @Specialization(guards = { "!isEmpty(string)", "zeroArgs(args)" })
         @TruffleBoundary
         public Object squeezeBangZeroArgs(DynamicObject string, Object[] args,
-                                          @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
+                @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
             // Taken from org.jruby.RubyString#squeeze_bang19.
 
             final Rope rope = rope(string);
             final RopeBuilder buffer = RopeOperations.toByteListCopy(rope);
 
             final boolean squeeze[] = new boolean[StringSupport.TRANS_SIZE];
-            for (int i = 0; i < StringSupport.TRANS_SIZE; i++) squeeze[i] = true;
+            for (int i = 0; i < StringSupport.TRANS_SIZE; i++)
+                squeeze[i] = true;
 
             if (singleByteOptimizableProfile.profile(rope.isSingleByteOptimizable())) {
-                if (! StringSupport.singleByteSqueeze(buffer, squeeze)) {
+                if (!StringSupport.singleByteSqueeze(buffer, squeeze)) {
                     return nil();
                 } else {
                     StringOperations.setRope(string, RopeOperations.ropeFromByteList(buffer));
                 }
             } else {
-                if (! squeezeCommonMultiByte(buffer, squeeze, null, encoding(string), false)) {
+                if (!squeezeCommonMultiByte(buffer, squeeze, null, encoding(string), false)) {
                     return nil();
                 } else {
                     StringOperations.setRope(string, RopeOperations.ropeFromByteList(buffer));
@@ -1854,7 +2011,7 @@ public abstract class StringNodes {
 
         @Specialization(guards = { "!isEmpty(string)", "!zeroArgs(args)" })
         public Object squeezeBang(VirtualFrame frame, DynamicObject string, Object[] args,
-                                  @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
+                @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
             // Taken from org.jruby.RubyString#squeeze_bang19.
 
             if (toStrNode == null) {
@@ -1873,7 +2030,7 @@ public abstract class StringNodes {
 
         @TruffleBoundary
         private Object performSqueezeBang(DynamicObject string, DynamicObject[] otherStrings,
-                                          @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
+                @Cached("createBinaryProfile()") ConditionProfile singleByteOptimizableProfile) {
 
             if (checkEncodingNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -2162,17 +2319,18 @@ public abstract class StringNodes {
             return nil();
         }
 
-        @Specialization(guards = { "!isEmpty(self)", "isRubyString(fromStr)", "isRubyString(toStr)" })
-        public Object trBang(VirtualFrame frame, DynamicObject self, DynamicObject fromStr, DynamicObject toStr) {
-            if (rope(toStr).isEmpty()) {
-                if (deleteBangNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    deleteBangNode = insert(StringNodesFactory.DeleteBangNodeFactory.create(new RubyNode[] {}));
-                }
-
-                return deleteBangNode.executeDeleteBang(frame, self, new DynamicObject[] { fromStr });
+        @Specialization(guards = { "!isEmpty(self)", "isRubyString(fromStr)", "isRubyString(toStr)", "isEmpty(toStr)" })
+        public Object trBangEmpty(VirtualFrame frame, DynamicObject self, DynamicObject fromStr, DynamicObject toStr) {
+            if (deleteBangNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                deleteBangNode = insert(DeleteBangNode.create());
             }
 
+            return deleteBangNode.executeDeleteBang(frame, self, new DynamicObject[]{ fromStr });
+        }
+
+        @Specialization(guards = { "!isEmpty(self)", "isRubyString(fromStr)", "isRubyString(toStr)", "!isEmpty(toStr)" })
+        public Object trBang(VirtualFrame frame, DynamicObject self, DynamicObject fromStr, DynamicObject toStr) {
             if (checkEncodingNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 checkEncodingNode = insert(EncodingNodesFactory.CheckEncodingNodeGen.create(null, null));
@@ -2212,7 +2370,7 @@ public abstract class StringNodes {
             if (rope(toStr).isEmpty()) {
                 if (deleteBangNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    deleteBangNode = insert(StringNodesFactory.DeleteBangNodeFactory.create(new RubyNode[] {}));
+                    deleteBangNode = insert(DeleteBangNode.create());
                 }
 
                 return deleteBangNode.executeDeleteBang(frame, self, new DynamicObject[] { fromStr });

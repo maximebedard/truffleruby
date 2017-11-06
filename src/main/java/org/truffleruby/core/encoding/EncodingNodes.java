@@ -106,6 +106,93 @@ public abstract class EncodingNodes {
     }
 
     @NodeChildren({ @NodeChild("first"), @NodeChild("second") })
+    public static abstract class NegotiateCompatibleRopeEncodingNode extends RubyNode {
+
+        public abstract Encoding executeNegotiate(Rope first, Rope second);
+
+        public static NegotiateCompatibleRopeEncodingNode create() {
+            return EncodingNodesFactory.NegotiateCompatibleRopeEncodingNodeGen.create(null, null);
+        }
+
+        @Specialization(guards = "getEncoding(first) == getEncoding(second)")
+        protected Encoding negotiateSameEncodingUncached(Rope first, Rope second) {
+            return getEncoding(first);
+        }
+
+        @Specialization(guards = {
+                "firstEncoding != secondEncoding",
+                "isEmpty(first) == isFirstEmpty",
+                "isEmpty(second) == isSecondEmpty",
+                "getCodeRange(first) == firstCodeRange",
+                "getCodeRange(second) == secondCodeRange",
+                "getEncoding(first) == firstEncoding",
+                "getEncoding(second) == secondEncoding"
+        }, limit = "getCacheLimit()")
+        protected Encoding negotiateRopeRopeCached(Rope first, Rope second,
+                @Cached("getEncoding(first)") Encoding firstEncoding,
+                @Cached("getEncoding(second)") Encoding secondEncoding,
+                @Cached("isEmpty(first)") boolean isFirstEmpty,
+                @Cached("isEmpty(second)") boolean isSecondEmpty,
+                @Cached("getCodeRange(first)") CodeRange firstCodeRange,
+                @Cached("getCodeRange(second)") CodeRange secondCodeRange,
+                @Cached("negotiateRopeRopeUncached(first, second)") Encoding negotiatedEncoding) {
+            return negotiatedEncoding;
+        }
+
+        @Specialization(guards = "getEncoding(first) != getEncoding(second)", replaces = "negotiateRopeRopeCached")
+        protected Encoding negotiateRopeRopeUncached(Rope first, Rope second) {
+            return compatibleEncodingForRopes(first, second);
+        }
+
+        protected Encoding getEncoding(Rope rope) {
+            return rope.getEncoding();
+        }
+
+        protected CodeRange getCodeRange(Rope rope) {
+            return rope.getCodeRange();
+        }
+
+        protected boolean isEmpty(Rope rope) {
+            return rope.isEmpty();
+        }
+
+        @TruffleBoundary
+        private static Encoding compatibleEncodingForRopes(Rope firstRope, Rope secondRope) {
+            // Taken from org.jruby.RubyEncoding#areCompatible.
+
+            final Encoding firstEncoding = firstRope.getEncoding();
+            final Encoding secondEncoding = secondRope.getEncoding();
+
+            if (secondRope.isEmpty())
+                return firstEncoding;
+            if (firstRope.isEmpty()) {
+                return firstEncoding.isAsciiCompatible() && (secondRope.getCodeRange() == CodeRange.CR_7BIT) ? firstEncoding : secondEncoding;
+            }
+
+            if (!firstEncoding.isAsciiCompatible() || !secondEncoding.isAsciiCompatible())
+                return null;
+
+            if (firstRope.getCodeRange() != secondRope.getCodeRange()) {
+                if (firstRope.getCodeRange() == CodeRange.CR_7BIT)
+                    return secondEncoding;
+                if (secondRope.getCodeRange() == CodeRange.CR_7BIT)
+                    return firstEncoding;
+            }
+            if (secondRope.getCodeRange() == CodeRange.CR_7BIT)
+                return firstEncoding;
+            if (firstRope.getCodeRange() == CodeRange.CR_7BIT)
+                return secondEncoding;
+
+            return null;
+        }
+
+        protected int getCacheLimit() {
+            return getContext().getOptions().ENCODING_COMPATIBLE_QUERY_CACHE;
+        }
+
+    }
+
+    @NodeChildren({ @NodeChild("first"), @NodeChild("second") })
     public static abstract class NegotiateCompatibleEncodingNode extends RubyNode {
 
         @Child private ToEncodingNode getEncodingNode = ToEncodingNode.create();
@@ -126,7 +213,7 @@ public abstract class EncodingNodes {
         }
 
         @Specialization(guards = "getEncoding(first) == getEncoding(second)", replaces = "negotiateSameEncodingCached")
-        protected Encoding negotiateSameEncodingUncached(Object first, Object second) {
+        protected Encoding negotiateSameEncodingUncached(DynamicObject first, DynamicObject second) {
             return getEncoding(first);
         }
 
