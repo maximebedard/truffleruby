@@ -854,7 +854,7 @@ public abstract class StringNodes {
 
     public abstract static class TrTableNode extends CoreMethodArrayArgumentsNode {
         @Child protected ToStrNode toStr = ToStrNodeGen.create(null);
-        @Child protected EncodingNodes.NegotiateCompatibleRopeEncodingNode checkEncodingNode = EncodingNodes.NegotiateCompatibleRopeEncodingNode.create();
+        @Child protected EncodingNodes.CheckRopeEncodingNode checkEncodingNode = EncodingNodes.CheckRopeEncodingNode.create();
 
         protected boolean[] makeSqueeze() {
             return new boolean[StringSupport.TRANS_SIZE + 1];
@@ -862,9 +862,9 @@ public abstract class StringNodes {
 
         protected Encoding findEncoding(DynamicObject string, Rope[] ropes) {
             Rope rope = StringOperations.rope(string);
-            Encoding enc = checkEncodingNode.executeNegotiate(rope, ropes[0]);
+            Encoding enc = checkEncodingNode.executeCheckEncoding(rope, ropes[0]);
             for (int i = 1; i < ropes.length; i++) {
-                enc = checkEncodingNode.executeNegotiate(rope, ropes[i]);
+                enc = checkEncodingNode.executeCheckEncoding(rope, ropes[i]);
             }
             return enc;
         }

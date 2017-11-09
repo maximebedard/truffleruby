@@ -585,6 +585,44 @@ public abstract class EncodingNodes {
     }
 
     @NodeChildren({ @NodeChild("first"), @NodeChild("second") })
+    public static abstract class CheckRopeEncodingNode extends RubyNode {
+
+        @Child private NegotiateCompatibleRopeEncodingNode negotiateCompatibleEncodingNode;
+        @Child private ToEncodingNode toEncodingNode;
+
+        public static CheckRopeEncodingNode create() {
+            return EncodingNodesFactory.CheckRopeEncodingNodeGen.create(null, null);
+        }
+
+        public CheckRopeEncodingNode() {
+            negotiateCompatibleEncodingNode = EncodingNodesFactory.NegotiateCompatibleRopeEncodingNodeGen.create(null, null);
+        }
+
+        public abstract Encoding executeCheckEncoding(Rope first, Rope second);
+
+        @Specialization
+        public Encoding checkEncoding(Rope first, Rope second,
+                @Cached("create()") BranchProfile errorProfile) {
+            final Encoding negotiatedEncoding = negotiateCompatibleEncodingNode.executeNegotiate(first, second);
+
+            if (negotiatedEncoding == null) {
+                errorProfile.enter();
+
+                if (toEncodingNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    toEncodingNode = insert(ToEncodingNode.create());
+                }
+
+                throw new RaiseException(getContext().getCoreExceptions().encodingCompatibilityErrorIncompatible(
+                        toEncodingNode.executeToEncoding(first), toEncodingNode.executeToEncoding(second), this));
+            }
+
+            return negotiatedEncoding;
+        }
+
+    }
+
+    @NodeChildren({ @NodeChild("first"), @NodeChild("second") })
     public static abstract class CheckEncodingNode extends RubyNode {
 
         @Child private NegotiateCompatibleEncodingNode negotiateCompatibleEncodingNode;
