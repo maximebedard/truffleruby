@@ -9,6 +9,7 @@
  */
 package org.truffleruby.language.dispatch;
 
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
 
 public class RubyCallNodeParameters {
@@ -22,17 +23,18 @@ public class RubyCallNodeParameters {
     private final boolean isVCall;
     private final boolean isSafeNavigation;
     private final boolean isAttrAssign;
+    private final RubyNode lexicalScope;
 
     public RubyCallNodeParameters(
             RubyNode receiver, String methodName, RubyNode block, RubyNode[] arguments,
-            boolean isSplatted, boolean ignoreVisibility) {
-        this(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, false, false, false);
+            boolean isSplatted, boolean ignoreVisibility, RubyNode lexicalScope) {
+        this(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, false, false, false, lexicalScope);
     }
 
     public RubyCallNodeParameters(
             RubyNode receiver, String methodName, RubyNode block, RubyNode[] arguments,
             boolean isSplatted, boolean ignoreVisibility,
-            boolean isVCall, boolean isSafeNavigation, boolean isAttrAssign) {
+            boolean isVCall, boolean isSafeNavigation, boolean isAttrAssign, RubyNode lexicalScope) {
         this.receiver = receiver;
         this.methodName = methodName;
         this.block = block;
@@ -42,10 +44,11 @@ public class RubyCallNodeParameters {
         this.isVCall = isVCall;
         this.isSafeNavigation = isSafeNavigation;
         this.isAttrAssign = isAttrAssign;
+        this.lexicalScope = lexicalScope;
     }
 
     public RubyCallNodeParameters withReceiverAndArguments(RubyNode receiver, RubyNode[] arguments, RubyNode block) {
-        return new RubyCallNodeParameters(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, isVCall, isSafeNavigation, isAttrAssign);
+        return new RubyCallNodeParameters(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, isVCall, isSafeNavigation, isAttrAssign, lexicalScope);
     }
 
     public RubyNode getReceiver() {
