@@ -574,7 +574,9 @@ public abstract class KernelNodes {
                     RubyArguments.getDeclarationContext(parentFrame),
                     rootNode.getRootNode().getSharedMethodInfo().getName(),
                     RubyArguments.getMethod(parentFrame).getDeclaringModule(),
-                    Visibility.PUBLIC, callTarget);
+                    Visibility.PUBLIC,
+                    false,
+                    callTarget);
 
             return callNode.call(RubyArguments.pack(parentFrame, null, method, null, self, null, RubyNode.EMPTY_ARGUMENTS));
         }
@@ -1094,7 +1096,7 @@ public abstract class KernelNodes {
 
             final DynamicObject module = coreLibrary().getMetaClass(self);
             return new InternalMethod(getContext(), info, methodMissing.getLexicalScope(), DeclarationContext.NONE,
-                    normalizedName, module, Visibility.PUBLIC, newCallTarget);
+                    normalizedName, module, Visibility.PUBLIC, false, newCallTarget);
         }
 
         private static class CallMethodMissingWithStaticName extends RubyNode {

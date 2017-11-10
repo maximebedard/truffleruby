@@ -60,7 +60,7 @@ public class LiteralMethodDefinitionNode extends RubyNode {
         final InternalMethod currentMethod = RubyArguments.getMethod(frame);
 
         final InternalMethod method = new InternalMethod(getContext(),
-                sharedMethodInfo, currentMethod.getLexicalScope(), declarationContext, name, module, visibility, false, null, callTarget, null);
+                sharedMethodInfo, currentMethod.getLexicalScope(), declarationContext, name, module, visibility, false, false, null, callTarget, null);
 
         addMethodNode.executeAddMethod(module, method, visibility);
 

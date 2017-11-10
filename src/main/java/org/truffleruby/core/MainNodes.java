@@ -9,15 +9,22 @@
  */
 package org.truffleruby.core;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
+
 import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
 import org.truffleruby.core.module.ModuleNodes;
 import org.truffleruby.core.module.ModuleNodesFactory;
 import org.truffleruby.language.Visibility;
+import org.truffleruby.language.control.RaiseException;
+import org.truffleruby.language.methods.UsingNode;
+import org.truffleruby.language.methods.UsingNodeGen;
 
 @CoreClass("main")
 public abstract class MainNodes {
@@ -44,6 +51,30 @@ public abstract class MainNodes {
             final DynamicObject object = coreLibrary().getObjectClass();
             return privateNode.executePrivate(frame, object, args);
         }
+    }
+
+    @CoreMethod(names = "using", required = 1, needsSelf = false)
+    public abstract static class MainUsingNode extends CoreMethodArrayArgumentsNode {
+
+        @Child private UsingNode usingNode = UsingNodeGen.create(null);
+
+        @Specialization(guards = "isRubyModule(refinementModule)")
+        public DynamicObject mainUsing(DynamicObject refinementModule,
+                @Cached("create()") BranchProfile errorProfile) {
+            if (!isCalledFromTopLevel()) {
+                errorProfile.enter();
+                throw new RaiseException(coreExceptions().runtimeError("main.using is permitted only at toplevel", this));
+            }
+            usingNode.executeUsing(refinementModule);
+            return nil();
+        }
+
+        @TruffleBoundary
+        public boolean isCalledFromTopLevel() {
+            // TODO BJF Review for correct way to determine toplevel
+            return true;
+        }
+
     }
 
 }

@@ -22,6 +22,7 @@ import org.truffleruby.language.RubyConstant;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.Visibility;
 import org.truffleruby.language.control.RaiseException;
+import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.objects.shared.SharedObjects;
 import org.truffleruby.parser.Identifiers;
@@ -294,16 +295,30 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static MethodLookupResult lookupMethodCached(DynamicObject module, String name) {
+    public static MethodLookupResult lookupMethodCached(DynamicObject module, String name, DeclarationContext declarationContext) {
         final ArrayList<Assumption> assumptions = new ArrayList<>();
 
         // Look in ancestors
         for (DynamicObject ancestor : Layouts.MODULE.getFields(module).ancestors()) {
-            ModuleFields fields = Layouts.MODULE.getFields(ancestor);
+            final ModuleFields fields = Layouts.MODULE.getFields(ancestor);
             assumptions.add(fields.getMethodsUnmodifiedAssumption());
-            InternalMethod method = fields.getMethod(name);
+            final InternalMethod method = fields.getMethod(name);
             if (method != null) {
-                return new MethodLookupResult(method, toArray(assumptions));
+                if (method.isRefined()) {
+                    if (declarationContext != null) {
+                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        if (refinement != null) {
+                            // TODO BJF Need to pass assumptions here?
+                            return lookupMethodCached(refinement, name, null);
+                        }
+                    }
+                    if (method.getOriginalMethod() != null) {
+                        return new MethodLookupResult(method.getOriginalMethod(), toArray(assumptions));
+                    }
+                } else {
+                    return new MethodLookupResult(method, toArray(assumptions));
+                }
+
             }
         }
 
@@ -312,13 +327,27 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static InternalMethod lookupMethodUncached(DynamicObject module, String name) {
+    public static InternalMethod lookupMethodUncached(DynamicObject module, String name, DeclarationContext declarationContext) {
         // Look in ancestors
         for (DynamicObject ancestor : Layouts.MODULE.getFields(module).ancestors()) {
             final ModuleFields fields = Layouts.MODULE.getFields(ancestor);
             final InternalMethod method = fields.getMethod(name);
             if (method != null) {
-                return method;
+                if (method.isRefined()) {
+                    if (declarationContext != null) {
+                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        if (refinement != null) {
+                            // TODO BJF Need to pass assumptions here?
+                            return lookupMethodUncached(refinement, name, null);
+                        }
+                    }
+                    if (method.getOriginalMethod() != null) {
+                        return method.getOriginalMethod();
+                    }
+                } else {
+                    return method;
+                }
+
             }
         }
 
@@ -327,7 +356,7 @@ public abstract class ModuleOperations {
     }
 
     public static InternalMethod lookupMethod(DynamicObject module, String name, Visibility visibility) {
-        final InternalMethod method = lookupMethodUncached(module, name);
+        final InternalMethod method = lookupMethodUncached(module, name, null);
         if (method == null || method.isUndefined()) {
             return null;
         }

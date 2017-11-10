@@ -16,6 +16,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.arguments.RubyArguments;
+import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.methods.ModuleBodyDefinitionNode;
 
@@ -40,8 +41,12 @@ public class RunModuleDefinitionNode extends RubyNode {
         definitionMethod.execute(frame); // for tracing
         final InternalMethod definition = definitionMethod.createMethod(frame, lexicalScope, module);
 
+        final DeclarationContext parentContext = RubyArguments.getDeclarationContext(frame);
+        final DeclarationContext newContext = definition.getDeclarationContext().withRefinements(parentContext.getRefinements());
+
+        // TODO (eregon): check this DeclarationContext
         return callModuleDefinitionNode.call(definition.getCallTarget(), RubyArguments.pack(
-                null, null, definition, null, module, null, RubyNode.EMPTY_ARGUMENTS));
+                null, null, definition, newContext, null, module, null, RubyNode.EMPTY_ARGUMENTS));
     }
 
 }

@@ -35,6 +35,7 @@ public class RubyCallNode extends RubyNode {
 
     @Child private RubyNode receiver;
     @Child private ProcOrNullNode block;
+    @Child private RubyNode declarationContextNode;
     @Children private final RubyNode[] arguments;
 
     private final boolean isSplatted;
@@ -65,6 +66,7 @@ public class RubyCallNode extends RubyNode {
         this.isVCall = parameters.isVCall();
         this.isSafeNavigation = parameters.isSafeNavigation();
         this.isAttrAssign = parameters.isAttrAssign();
+        this.declarationContextNode = parameters.getDeclarationContext();
 
         if (parameters.isSafeNavigation()) {
             nilProfile = ConditionProfile.createCountingProfile();
@@ -233,7 +235,7 @@ public class RubyCallNode extends RubyNode {
             // TODO CS-10-Apr-17 I'd like to use this but it doesn't give the same result
             // lookupMethodNode.executeLookupMethod(frame, coreLibrary().getMetaClass(receiverObject), methodName);
 
-            return ModuleOperations.lookupMethodUncached(coreLibrary().getMetaClass(receiverObject), methodName);
+            return ModuleOperations.lookupMethodUncached(coreLibrary().getMetaClass(receiverObject), methodName, null);
         }
 
         // TODO CS-10-Apr-17 remove this boundary

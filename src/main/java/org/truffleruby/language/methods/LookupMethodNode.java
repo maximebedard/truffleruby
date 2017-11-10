@@ -34,7 +34,7 @@ import org.truffleruby.language.objects.MetaClassNode;
 import org.truffleruby.language.objects.MetaClassNodeGen;
 
 /**
- * Caches {@link ModuleOperations#lookupMethodCached(DynamicObject, String)}
+ * Caches {@link ModuleOperations#lookupMethodCached(DynamicObject, String, DeclarationContext)}
  * on an actual instance.
  */
 @NodeChildren({ @NodeChild("self"), @NodeChild("name") })
@@ -107,7 +107,7 @@ public abstract class LookupMethodNode extends RubyNode {
                 onMetaClassProfile.profile((topMethod = fields.getMethod(name)) != null)) {
             method = topMethod;
         } else {
-            method = ModuleOperations.lookupMethodUncached(metaClass, name);
+            method = ModuleOperations.lookupMethodUncached(metaClass, name, null);
         }
 
         if (notFoundProfile.profile(method == null || method.isUndefined())) {
@@ -158,18 +158,18 @@ public abstract class LookupMethodNode extends RubyNode {
     }
 
     protected MethodLookupResult doCachedLookup(VirtualFrame frame, Object self, String name) {
-        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic);
+        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic); // TODO BJF Fix cached lookup
     }
 
     public static MethodLookupResult lookupMethodCachedWithVisibility(RubyContext context, VirtualFrame callingFrame,
-            Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
+                                                                Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
         CompilerAsserts.neverPartOfCompilation("slow-path method lookup should not be compiled");
 
         if (RubyGuards.isForeignObject(receiver)) {
             throw new UnsupportedOperationException("method lookup not supported on foreign objects");
         }
-
-        final MethodLookupResult method = ModuleOperations.lookupMethodCached(context.getCoreLibrary().getMetaClass(receiver), name);
+        final DeclarationContext declarationContext = RubyArguments.tryGetDeclarationContext(callingFrame);
+        final MethodLookupResult method = ModuleOperations.lookupMethodCached(context.getCoreLibrary().getMetaClass(receiver), name, declarationContext);
 
         if (!method.isDefined()) {
             return method.withNoMethod();

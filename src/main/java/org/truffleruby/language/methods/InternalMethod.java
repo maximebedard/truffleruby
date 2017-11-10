@@ -40,10 +40,13 @@ public class InternalMethod implements ObjectGraphNode {
     private final boolean undefined;
     private final boolean unimplemented; // similar to MRI's rb_f_notimplement
     private final boolean builtIn;
+    /** A flag to tell whether there exist refinements of this method */
+    private final boolean refined;
     private final DynamicObject proc; // only if method is created from a Proc
 
     private final CallTarget callTarget;
     private final DynamicObject capturedBlock;
+    private final InternalMethod originalMethod;
 
     public static InternalMethod fromProc(
             RubyContext context,
@@ -62,6 +65,7 @@ public class InternalMethod implements ObjectGraphNode {
                 declaringModule,
                 visibility,
                 false,
+                false,
                 proc,
                 callTarget,
                 Layouts.PROC.getBlock(proc));
@@ -75,8 +79,9 @@ public class InternalMethod implements ObjectGraphNode {
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
+            boolean refined,
             CallTarget callTarget) {
-        this(context, sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, false, null, callTarget, null);
+        this(context, sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, false, refined, null, callTarget, null);
     }
 
     public InternalMethod(
@@ -88,11 +93,12 @@ public class InternalMethod implements ObjectGraphNode {
             DynamicObject declaringModule,
             Visibility visibility,
             boolean undefined,
+            boolean refined,
             DynamicObject proc,
             CallTarget callTarget,
             DynamicObject capturedBlock) {
-        this(sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, undefined,
-                false, !context.getCoreLibrary().isLoaded(), proc, callTarget, capturedBlock);
+        this(sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, undefined, false,
+                !context.getCoreLibrary().isLoaded(), refined, proc, callTarget, capturedBlock, null);
     }
 
     private InternalMethod(
@@ -105,9 +111,11 @@ public class InternalMethod implements ObjectGraphNode {
             boolean undefined,
             boolean unimplemented,
             boolean builtIn,
+            boolean refined,
             DynamicObject proc,
             CallTarget callTarget,
-            DynamicObject capturedBlock) {
+            DynamicObject capturedBlock,
+            InternalMethod originalMethod) {
         assert RubyGuards.isRubyModule(declaringModule);
         assert lexicalScope != null;
         this.sharedMethodInfo = sharedMethodInfo;
@@ -119,9 +127,11 @@ public class InternalMethod implements ObjectGraphNode {
         this.undefined = undefined;
         this.unimplemented = unimplemented;
         this.builtIn = builtIn;
+        this.refined = refined;
         this.proc = proc;
         this.callTarget = callTarget;
         this.capturedBlock = capturedBlock;
+        this.originalMethod = originalMethod;
     }
 
     public SharedMethodInfo getSharedMethodInfo() {
@@ -152,8 +162,16 @@ public class InternalMethod implements ObjectGraphNode {
         return builtIn;
     }
 
+    public boolean isRefined() {
+        return refined;
+    }
+
     public CallTarget getCallTarget() {
         return callTarget;
+    }
+
+    public InternalMethod getOriginalMethod() {
+        return originalMethod;
     }
 
     public InternalMethod withDeclaringModule(DynamicObject newDeclaringModule) {
@@ -172,9 +190,11 @@ public class InternalMethod implements ObjectGraphNode {
                     undefined,
                     unimplemented,
                     builtIn,
+                    refined,
                     proc,
                     callTarget,
-                    capturedBlock);
+                    capturedBlock,
+                    originalMethod);
         }
     }
 
@@ -192,9 +212,55 @@ public class InternalMethod implements ObjectGraphNode {
                     undefined,
                     unimplemented,
                     builtIn,
+                    refined,
                     proc,
                     callTarget,
-                    capturedBlock);
+                    capturedBlock,
+                    originalMethod);
+        }
+    }
+
+    public InternalMethod withRefined(boolean newRefined) {
+        if (refined == newRefined) {
+            return this;
+        } else {
+            return new InternalMethod(
+                    sharedMethodInfo,
+                    lexicalScope,
+                    declarationContext,
+                    name,
+                    declaringModule,
+                    visibility,
+                    undefined,
+                    unimplemented,
+                    builtIn,
+                    newRefined,
+                    proc,
+                    callTarget,
+                    capturedBlock,
+                    originalMethod);
+        }
+    }
+
+    public InternalMethod withOriginalMethod(InternalMethod newOriginalMethod) {
+        if (originalMethod == newOriginalMethod) {
+            return this;
+        } else {
+            return new InternalMethod(
+                sharedMethodInfo,
+                lexicalScope,
+                declarationContext,
+                name,
+                declaringModule,
+                visibility,
+                undefined,
+                unimplemented,
+                builtIn,
+                refined,
+                proc,
+                callTarget,
+                capturedBlock,
+                newOriginalMethod);
         }
     }
 
@@ -212,9 +278,11 @@ public class InternalMethod implements ObjectGraphNode {
                     undefined,
                     unimplemented,
                     builtIn,
+                    refined,
                     proc,
                     callTarget,
-                    capturedBlock);
+                    capturedBlock,
+                    originalMethod);
         }
     }
 
@@ -229,9 +297,11 @@ public class InternalMethod implements ObjectGraphNode {
                 true,
                 unimplemented,
                 builtIn,
+                refined,
                 proc,
                 callTarget,
-                capturedBlock);
+                capturedBlock,
+                originalMethod);
     }
 
     public InternalMethod unimplemented() {
@@ -245,9 +315,11 @@ public class InternalMethod implements ObjectGraphNode {
                 undefined,
                 true,
                 builtIn,
+                refined,
                 proc,
                 callTarget,
-                capturedBlock);
+                capturedBlock,
+                originalMethod);
     }
 
     @TruffleBoundary
