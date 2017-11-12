@@ -24,10 +24,13 @@ import org.truffleruby.core.cast.BooleanCastNodeGen;
 import org.truffleruby.core.cast.ProcOrNullNode;
 import org.truffleruby.core.cast.ProcOrNullNodeGen;
 import org.truffleruby.core.module.ModuleOperations;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.methods.BlockDefinitionNode;
 import org.truffleruby.language.methods.InternalMethod;
+
+import java.util.Map;
 
 public class RubyCallNode extends RubyNode {
 
@@ -35,6 +38,7 @@ public class RubyCallNode extends RubyNode {
 
     @Child private RubyNode receiver;
     @Child private ProcOrNullNode block;
+    @Child private RubyNode lexicalScopeNode;
     @Children private final RubyNode[] arguments;
 
     private final boolean isSplatted;
@@ -65,6 +69,7 @@ public class RubyCallNode extends RubyNode {
         this.isVCall = parameters.isVCall();
         this.isSafeNavigation = parameters.isSafeNavigation();
         this.isAttrAssign = parameters.isAttrAssign();
+        this.lexicalScopeNode = parameters.getLexicalScope();
 
         if (parameters.isSafeNavigation()) {
             nilProfile = ConditionProfile.createCountingProfile();
@@ -107,6 +112,15 @@ public class RubyCallNode extends RubyNode {
                 dispatchHead = insert(CallDispatchHeadNode.create());
             }
         }
+
+        Map<DynamicObject, DynamicObject> refinements = null;
+        if(lexicalScopeNode != null){
+            final LexicalScope lexicalScope = (LexicalScope) lexicalScopeNode.execute(frame);
+            if(lexicalScope != null && !lexicalScope.getRefinements().isEmpty()){
+                refinements = lexicalScope.getRefinements();
+            }
+        }
+        // TODO Pass refinements to dispatch
 
         final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
         if (isAttrAssign) {

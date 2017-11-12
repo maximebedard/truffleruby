@@ -13,12 +13,17 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LexicalScope {
 
     public static final LexicalScope NONE = null;
 
     private final LexicalScope parent;
     @CompilationFinal private volatile DynamicObject liveModule;
+
+    private final Map<DynamicObject, DynamicObject> refinements = new HashMap<>();
 
     public LexicalScope(LexicalScope parent, DynamicObject liveModule) {
         assert liveModule == null || RubyGuards.isRubyModule(liveModule);
@@ -52,6 +57,10 @@ public class LexicalScope {
         }
 
         return scope.liveModule;
+    }
+
+    public Map<DynamicObject, DynamicObject> getRefinements() {
+        return refinements;
     }
 
     @Override

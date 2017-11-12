@@ -303,6 +303,11 @@ public abstract class ModuleOperations {
             assumptions.add(fields.getMethodsUnmodifiedAssumption());
             InternalMethod method = fields.getMethod(name);
             if (method != null) {
+//                if (refinements != null
+//                        && method.isRefined()
+//                        && refinements.containsKey(module)) {
+//
+//                }
                 return new MethodLookupResult(method, toArray(assumptions));
             }
         }

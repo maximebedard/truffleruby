@@ -92,6 +92,8 @@ import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.GetCurrentVisibilityNode;
 import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.methods.SharedMethodInfo;
+import org.truffleruby.language.methods.UsingNode;
+import org.truffleruby.language.methods.UsingNodeGen;
 import org.truffleruby.language.objects.IsANode;
 import org.truffleruby.language.objects.IsANodeGen;
 import org.truffleruby.language.objects.IsFrozenNode;
@@ -1934,13 +1936,15 @@ public abstract class ModuleNodes {
 
 
     @CoreMethod(names = "using", required = 1, visibility = Visibility.PRIVATE)
-    public abstract static class UsingNode extends CoreMethodArrayArgumentsNode {
+    public abstract static class ModuleUsingNode extends CoreMethodArrayArgumentsNode {
+
+        @Child private UsingNode usingNode = UsingNodeGen.create(null, null);
 
         @Specialization
-        public DynamicObject using(VirtualFrame frame, DynamicObject self, DynamicObject klass) {
+        public DynamicObject moduleUsing(VirtualFrame frame, DynamicObject self, DynamicObject refinementModule) {
             InternalMethod method = getContext().getCallStack().getCallingMethodIgnoringSend();
             LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
-
+            usingNode.executeUsing(lexicalScope, refinementModule);
             return self;
         }
 

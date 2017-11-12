@@ -86,4 +86,8 @@ public class RubyCallNodeParameters {
     public boolean isAttrAssign() {
         return isAttrAssign;
     }
+
+    public RubyNode getLexicalScope() {
+        return lexicalScope;
+    }
 }

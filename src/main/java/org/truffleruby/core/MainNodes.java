@@ -9,15 +9,24 @@
  */
 package org.truffleruby.core;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
+import org.truffleruby.builtins.Primitive;
 import org.truffleruby.core.module.ModuleNodes;
 import org.truffleruby.core.module.ModuleNodesFactory;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.Visibility;
+import org.truffleruby.language.control.RaiseException;
+import org.truffleruby.language.methods.InternalMethod;
+import org.truffleruby.language.methods.UsingNode;
+import org.truffleruby.language.methods.UsingNodeGen;
 
 @CoreClass("main")
 public abstract class MainNodes {
@@ -44,6 +53,30 @@ public abstract class MainNodes {
             final DynamicObject object = coreLibrary().getObjectClass();
             return privateNode.executePrivate(frame, object, args);
         }
+    }
+
+    @Primitive(name = "main_using")
+    public abstract static class MainUsingNode extends CoreMethodArrayArgumentsNode {
+
+        @Child private UsingNode usingNode = UsingNodeGen.create(null, null);
+
+        @Specialization
+        public DynamicObject mainUsing(VirtualFrame frame, DynamicObject refineModule) {
+            if(!isCalledFromTopLevel()){
+                throw new RaiseException(coreExceptions().runtimeError("main.using is permitted only at toplevel", this));
+            }
+            InternalMethod method = getContext().getCallStack().getCallingMethodIgnoringSend();
+            LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
+            usingNode.executeUsing(lexicalScope, refineModule);
+            return nil();
+        }
+
+        @TruffleBoundary
+        public boolean isCalledFromTopLevel(){
+            // TODO BJF Review for correct way to determine toplevel
+            return getContext().getCallStack().getCallerFrameIgnoringSend(3) == null;
+        }
+
     }
 
 }
