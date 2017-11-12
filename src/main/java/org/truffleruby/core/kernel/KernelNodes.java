@@ -574,6 +574,7 @@ public abstract class KernelNodes {
                     rootNode.getRootNode().getSharedMethodInfo().getName(),
                     RubyArguments.getMethod(parentFrame).getDeclaringModule(),
                     Visibility.PUBLIC,
+                    false,
                     callTarget);
 
             return callNode.call(RubyArguments.pack(parentFrame, null, method, RubyArguments.getDeclarationContext(parentFrame), null, self, null, RubyNode.EMPTY_ARGUMENTS));
@@ -1092,7 +1093,7 @@ public abstract class KernelNodes {
             final CallTarget newCallTarget = Truffle.getRuntime().createCallTarget(newRootNode);
 
             final DynamicObject module = coreLibrary().getMetaClass(self);
-            return new InternalMethod(getContext(), info, methodMissing.getLexicalScope(), normalizedName, module, Visibility.PUBLIC, newCallTarget);
+            return new InternalMethod(getContext(), info, methodMissing.getLexicalScope(), normalizedName, module, Visibility.PUBLIC, false, newCallTarget);
         }
 
         private static class CallMethodMissingWithStaticName extends RubyNode {

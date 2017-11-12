@@ -12,8 +12,11 @@ package org.truffleruby.language.methods;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
+import jnr.ffi.annotations.In;
 import org.truffleruby.Layouts;
+import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.core.module.ModuleOperations;
 import org.truffleruby.language.RubyBaseNode;
 import org.truffleruby.language.Visibility;
@@ -30,6 +33,9 @@ public abstract class AddMethodNode extends RubyBaseNode {
     private final boolean ignoreNameVisibility;
 
     @Child private SingletonClassNode singletonClassNode;
+    @Child private LookupMethodNode lookupMethodNode;
+    @Child private AddMethodNode addMethodNode;
+
 
     public AddMethodNode(boolean ignoreNameVisibility) {
         this.ignoreNameVisibility = ignoreNameVisibility;
@@ -46,6 +52,11 @@ public abstract class AddMethodNode extends RubyBaseNode {
 
         method = method.withVisibility(visibility);
 
+        if(Layouts.MODULE.getFields(module).isRefinement()){
+            DynamicObject refinedClass = Layouts.MODULE.getFields(module).getRefinedClass();
+            addRefinedMethodEntry(refinedClass, method);
+        }
+
         if (visibility == Visibility.MODULE_FUNCTION) {
             addMethodToModule(module, method.withVisibility(Visibility.PRIVATE));
             final DynamicObject singletonClass = getSingletonClass(module);
@@ -56,6 +67,23 @@ public abstract class AddMethodNode extends RubyBaseNode {
     }
 
     public void addMethodToModule(DynamicObject module, InternalMethod method) {
+        final MethodLookupResult result = ModuleOperations.lookupMethod(module, method.getName());
+        if(result.getMethod() == null){
+            addMethodInternal(module, method, Visibility.PUBLIC);
+        } else {
+            addMethodInternal(module, result.getMethod().withRefined(true),  method.getVisibility());
+        }
+    }
+
+    protected void addMethodInternal(DynamicObject receiver, InternalMethod method, Visibility visibility) {
+        if (addMethodNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            addMethodNode = insert(AddMethodNodeGen.create(true, false, null, null, null));
+        }
+        addMethodNode.executeAddMethod(receiver, method, visibility);
+    }
+    
+    public void addMethodToModule(final DynamicObject module, InternalMethod method) {
         Layouts.MODULE.getFields(module).addMethod(getContext(), this, method);
     }
 

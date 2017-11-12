@@ -79,9 +79,16 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     private boolean hasFullName = false;
     private String name = null;
 
+    private boolean isRefinement = false;
+    private boolean isOverlaid = false;
+    private DynamicObject refinedClass;
+    private DynamicObject definedAt;
+
     private final ConcurrentMap<String, InternalMethod> methods = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RubyConstant> constants = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Object> classVariables = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DynamicObject, DynamicObject> refinements = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = new ConcurrentHashMap<>();
 
     private final CyclicAssumption methodsUnmodifiedAssumption;
     private final CyclicAssumption constantsUnmodifiedAssumption;
@@ -212,6 +219,11 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
             throw new RaiseException(context.getCoreExceptions().argumentError("cyclic include detected", currentNode));
         }
 
+        includeModule(context, module);
+    }
+
+    @TruffleBoundary
+    public DynamicObject includeModule(RubyContext context, DynamicObject module) {
         SharedObjects.propagate(context, rubyModuleObject, module);
 
         // We need to include the module ancestors in reverse order for a given inclusionPoint
@@ -240,6 +252,8 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
         performIncludes(inclusionPoint, modulesToInclude);
 
         newHierarchyVersion();
+
+        return inclusionPoint.getParentModule().getActualModule();
     }
 
     public void performIncludes(ModuleChain inclusionPoint, Deque<DynamicObject> moduleAncestors) {
@@ -531,6 +545,38 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
         return hasFullName() || givenBaseName != null;
     }
 
+    public boolean isRefinement() {
+        return isRefinement;
+    }
+
+    public void setRefinement(boolean refinement) {
+        isRefinement = refinement;
+    }
+
+    public boolean isOverlaid() {
+        return isOverlaid;
+    }
+
+    public void setOverlaid(boolean overlaid) {
+        isOverlaid = overlaid;
+    }
+
+    public DynamicObject getRefinedClass() {
+        return refinedClass;
+    }
+
+    public void setRefinedClass(DynamicObject refinedClass) {
+        this.refinedClass = refinedClass;
+    }
+
+    public DynamicObject getDefinedAt() {
+        return definedAt;
+    }
+
+    public void setDefinedAt(DynamicObject definedAt) {
+        this.definedAt = definedAt;
+    }
+
     @Override
     public String toString() {
         return super.toString() + "(" + getName() + ")";
@@ -582,6 +628,14 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
 
     public ConcurrentMap<String, Object> getClassVariables() {
         return classVariables;
+    }
+
+    public ConcurrentMap<DynamicObject, DynamicObject> getRefinements() {
+        return refinements;
+    }
+
+    public ConcurrentMap<DynamicObject, DynamicObject> getActivatedRefinements() {
+        return activatedRefinements;
     }
 
     public ModuleChain getParentModule() {
