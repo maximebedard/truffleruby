@@ -15,6 +15,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.Layouts;
 import org.truffleruby.RubyLanguage;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.NotProvided;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.control.RaiseException;
@@ -50,6 +51,7 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             final Object receiverObject,
             final Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             final Object[] argumentsObjects) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // Useful debug aid to catch a running-away NotProvided or undefined
@@ -96,9 +98,9 @@ public final class UnresolvedDispatchNode extends DispatchNode {
                             throw new UnsupportedOperationException();
                     }
                 } else if (RubyGuards.isRubyBasicObject(receiverObject)) {
-                    newDispatchNode = doDynamicObject(frame, first, receiverObject, methodName, argumentsObjects);
+                    newDispatchNode = doDynamicObject(frame, first, receiverObject, methodName, lexicalScope, argumentsObjects);
                 } else {
-                    newDispatchNode = doUnboxedObject(frame, first, receiverObject, methodName, argumentsObjects);
+                    newDispatchNode = doUnboxedObject(frame, first, receiverObject, methodName, lexicalScope, argumentsObjects);
                 }
             }
 
@@ -113,7 +115,7 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             ((CachedDispatchNode) dispatch).reassessSplittingInliningStrategy();
         }
 
-        return dispatch.executeDispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
+        return dispatch.executeDispatch(frame, receiverObject, methodName, blockObject, lexicalScope, argumentsObjects);
     }
 
     private CachedDispatchNode doUnboxedObject(
@@ -121,18 +123,19 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             DispatchNode first,
             Object receiverObject,
             Object methodName,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
 
         final String methodNameString = toString(methodName);
-        final MethodLookupResult method = lookup(frame, receiverObject, methodNameString, ignoreVisibility, onlyCallPublic);
+        final MethodLookupResult method = lookup(frame, receiverObject, methodNameString, ignoreVisibility, onlyCallPublic, lexicalScope);
 
         if (!method.isDefined()) {
-            return createMethodMissingNode(first, methodName, receiverObject, method, argumentsObjects);
+            return createMethodMissingNode(first, methodName, receiverObject, method, lexicalScope, argumentsObjects);
         }
 
         if (receiverObject instanceof Boolean) {
-            final MethodLookupResult falseMethodLookup = lookup(frame, false, methodNameString, ignoreVisibility, onlyCallPublic);
-            final MethodLookupResult trueMethodLookup = lookup(frame, true, methodNameString, ignoreVisibility, onlyCallPublic);
+            final MethodLookupResult falseMethodLookup = lookup(frame, false, methodNameString, ignoreVisibility, onlyCallPublic, lexicalScope);
+            final MethodLookupResult trueMethodLookup = lookup(frame, true, methodNameString, ignoreVisibility, onlyCallPublic, lexicalScope);
             assert falseMethodLookup.isDefined() || trueMethodLookup.isDefined();
 
             return new CachedBooleanDispatchNode(
@@ -151,13 +154,14 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             DispatchNode first,
             Object receiverObject,
             Object methodName,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
 
         String methodNameString = toString(methodName);
-        final MethodLookupResult method = lookup(frame, receiverObject, methodNameString, ignoreVisibility, onlyCallPublic);
+        final MethodLookupResult method = lookup(frame, receiverObject, methodNameString, ignoreVisibility, onlyCallPublic, lexicalScope);
 
         if (!method.isDefined()) {
-            return createMethodMissingNode(first, methodName, receiverObject, method, argumentsObjects);
+            return createMethodMissingNode(first, methodName, receiverObject, method, lexicalScope, argumentsObjects);
         }
 
         if (RubyGuards.isRubySymbol(receiverObject)) {
@@ -188,6 +192,7 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             Object methodName,
             Object receiverObject,
             MethodLookupResult methodLookup,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         switch (missingBehavior) {
             case RETURN_MISSING: {
@@ -196,7 +201,7 @@ public final class UnresolvedDispatchNode extends DispatchNode {
             }
 
             case CALL_METHOD_MISSING: {
-                final MethodLookupResult methodMissing = lookup(null, receiverObject, "method_missing", true, false);
+                final MethodLookupResult methodMissing = lookup(null, receiverObject, "method_missing", true, false, lexicalScope);
 
                 if (!methodMissing.isDefined()) {
                     final String methodNameString = toString(methodName);

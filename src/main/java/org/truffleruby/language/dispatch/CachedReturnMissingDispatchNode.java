@@ -11,6 +11,7 @@ package org.truffleruby.language.dispatch;
 
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.objects.MetaClassNode;
 import org.truffleruby.language.objects.MetaClassNodeGen;
 
@@ -58,6 +59,7 @@ public class CachedReturnMissingDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(assumptions);
@@ -67,6 +69,7 @@ public class CachedReturnMissingDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -77,6 +80,7 @@ public class CachedReturnMissingDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

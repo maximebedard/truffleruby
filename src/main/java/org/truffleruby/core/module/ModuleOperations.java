@@ -294,7 +294,7 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static MethodLookupResult lookupMethodCached(DynamicObject module, String name) {
+    public static MethodLookupResult lookupMethodCachedWithRefinements(DynamicObject module, String name, LexicalScope lexicalScope) {
         final ArrayList<Assumption> assumptions = new ArrayList<>();
 
         // Look in ancestors
@@ -303,11 +303,13 @@ public abstract class ModuleOperations {
             assumptions.add(fields.getMethodsUnmodifiedAssumption());
             InternalMethod method = fields.getMethod(name);
             if (method != null) {
-//                if (refinements != null
-//                        && method.isRefined()
-//                        && refinements.containsKey(module)) {
-//
-//                }
+                if (method.isRefined() &&
+                        lexicalScope != null &&
+                        !lexicalScope.getRefinements().isEmpty() &&
+                        lexicalScope.getRefinements().containsKey(module)) {
+                    // TODO BJF Need to pass assumptions here?
+                    return lookupMethodWithRefinements(lexicalScope.getRefinements().get(module), name, null);
+                }
                 return new MethodLookupResult(method, toArray(assumptions));
             }
         }
@@ -332,7 +334,7 @@ public abstract class ModuleOperations {
     }
 
     public static InternalMethod lookupMethod(DynamicObject module, String name, Visibility visibility) {
-        final InternalMethod method = lookupMethodUncached(module, name);
+        final InternalMethod method = lookupMethodUncachedWithRefinements(module, name, null);
         if (method == null || method.isUndefined()) {
             return null;
         }

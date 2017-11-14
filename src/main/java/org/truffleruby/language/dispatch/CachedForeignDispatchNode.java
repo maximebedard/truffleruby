@@ -12,6 +12,7 @@ package org.truffleruby.language.dispatch;
 import org.truffleruby.RubyContext;
 import org.truffleruby.interop.OutgoingForeignCallNode;
 import org.truffleruby.interop.OutgoingForeignCallNodeGen;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyGuards;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -46,11 +47,12 @@ public final class CachedForeignDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         if (guard(methodName, receiverObject)) {
             return doDispatch(frame, (TruffleObject) receiverObject, argumentsObjects);
         } else {
-            return next.executeDispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
+            return next.executeDispatch(frame, receiverObject, methodName, blockObject, lexicalScope, argumentsObjects);
         }
     }
 

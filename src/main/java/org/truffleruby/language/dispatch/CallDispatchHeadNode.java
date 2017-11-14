@@ -43,7 +43,8 @@ public class CallDispatchHeadNode extends DispatchHeadNode {
     }
 
     public Object call(VirtualFrame frame, Object receiver, Object method, Object... arguments) {
-        return dispatch(frame, receiver, method, null, arguments);
+        // TODO BJF REVIEW Refinments probably apply to these calls as well
+        return dispatch(frame, receiver, method, null, null, arguments);
     }
 
     public Object callWithBlock(
@@ -52,7 +53,8 @@ public class CallDispatchHeadNode extends DispatchHeadNode {
             Object method,
             DynamicObject block,
             Object... arguments) {
-        return dispatch(frame, receiver, method, block, arguments);
+        // TODO BJF REVIEW Refinments probably apply to these calls as well
+        return dispatch(frame, receiver, method, block, null, arguments);
     }
 
     public boolean callBoolean(

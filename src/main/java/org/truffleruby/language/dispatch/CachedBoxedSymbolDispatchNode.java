@@ -18,6 +18,7 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.methods.InternalMethod;
 
@@ -57,6 +58,7 @@ public class CachedBoxedSymbolDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(assumptions);
@@ -66,6 +68,7 @@ public class CachedBoxedSymbolDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -76,6 +79,7 @@ public class CachedBoxedSymbolDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

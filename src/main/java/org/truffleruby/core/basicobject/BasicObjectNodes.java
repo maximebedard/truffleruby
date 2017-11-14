@@ -400,7 +400,7 @@ public abstract class BasicObjectNodes {
          * The only way to fail if method is not null and not undefined is visibility.
          */
         private Visibility lastCallWasCallingPrivateOrProtectedMethod(Object self, String name) {
-            final InternalMethod method = ModuleOperations.lookupMethodUncached(coreLibrary().getMetaClass(self), name);
+            final InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(coreLibrary().getMetaClass(self), name, null);
             if (method != null && !method.isUndefined()) {
                 assert method.getVisibility().isPrivate() || method.getVisibility().isProtected();
                 return method.getVisibility();

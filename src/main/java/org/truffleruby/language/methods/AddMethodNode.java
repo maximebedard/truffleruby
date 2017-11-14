@@ -12,9 +12,7 @@ package org.truffleruby.language.methods;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
-import jnr.ffi.annotations.In;
 import org.truffleruby.Layouts;
 import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.core.module.ModuleOperations;
@@ -67,7 +65,7 @@ public abstract class AddMethodNode extends RubyBaseNode {
     }
 
     public void addMethodToModule(DynamicObject module, InternalMethod method) {
-        final MethodLookupResult result = ModuleOperations.lookupMethod(module, method.getName());
+        final MethodLookupResult result = ModuleOperations.lookupMethodWithRefinements(module, method.getName(), null);
         if(result.getMethod() == null){
             addMethodInternal(module, method, Visibility.PUBLIC);
         } else {

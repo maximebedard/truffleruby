@@ -26,6 +26,7 @@ import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.core.module.ModuleFields;
 import org.truffleruby.core.module.ModuleOperations;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.Visibility;
@@ -34,7 +35,7 @@ import org.truffleruby.language.objects.MetaClassNode;
 import org.truffleruby.language.objects.MetaClassNodeGen;
 
 /**
- * Caches {@link ModuleOperations#lookupMethodCached(DynamicObject, String)}
+ * Caches {@link ModuleOperations#lookupMethodCachedWithRefinements(DynamicObject, String, LexicalScope)}
  * on an actual instance.
  */
 @NodeChildren({ @NodeChild("self"), @NodeChild("name") })
@@ -158,18 +159,18 @@ public abstract class LookupMethodNode extends RubyNode {
     }
 
     protected MethodLookupResult doCachedLookup(VirtualFrame frame, Object self, String name) {
-        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic);
+        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic, null); // TODO BJF Fix cached lookup
     }
 
     public static MethodLookupResult lookupMethodCachedWithVisibility(RubyContext context, VirtualFrame callingFrame,
-            Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
+                                                                Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic, LexicalScope lexicalScope) {
         CompilerAsserts.neverPartOfCompilation("slow-path method lookup should not be compiled");
 
         if (RubyGuards.isForeignObject(receiver)) {
             throw new UnsupportedOperationException("method lookup not supported on foreign objects");
         }
 
-        final MethodLookupResult method = ModuleOperations.lookupMethodCached(context.getCoreLibrary().getMetaClass(receiver), name);
+        final MethodLookupResult method = ModuleOperations.lookupMethodCachedWithRefinements(context.getCoreLibrary().getMetaClass(receiver), name, lexicalScope);
 
         if (!method.isDefined()) {
             return method.withNoMethod();

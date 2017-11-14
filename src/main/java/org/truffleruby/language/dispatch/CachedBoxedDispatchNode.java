@@ -20,6 +20,7 @@ import com.oracle.truffle.api.object.Shape;
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.core.string.StringUtils;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.methods.InternalMethod;
 
 public class CachedBoxedDispatchNode extends CachedDispatchNode {
@@ -66,6 +67,7 @@ public class CachedBoxedDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             validShape.check();
@@ -76,6 +78,7 @@ public class CachedBoxedDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -86,6 +89,7 @@ public class CachedBoxedDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

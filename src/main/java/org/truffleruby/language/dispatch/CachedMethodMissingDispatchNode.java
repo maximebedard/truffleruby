@@ -19,6 +19,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.array.ArrayUtils;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.objects.MetaClassNode;
 import org.truffleruby.language.objects.MetaClassNodeGen;
@@ -87,6 +88,7 @@ public class CachedMethodMissingDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(originalMethodAssumptions);
@@ -97,6 +99,7 @@ public class CachedMethodMissingDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -107,6 +110,7 @@ public class CachedMethodMissingDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

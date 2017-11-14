@@ -19,6 +19,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.methods.InternalMethod;
 
 public class CachedBooleanDispatchNode extends CachedDispatchNode {
@@ -81,6 +82,7 @@ public class CachedBooleanDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(trueAssumptions);
@@ -91,6 +93,7 @@ public class CachedBooleanDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -101,6 +104,7 @@ public class CachedBooleanDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

@@ -11,6 +11,7 @@ package org.truffleruby.language.dispatch;
 
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.methods.InternalMethod;
 
 import com.oracle.truffle.api.Assumption;
@@ -62,6 +63,7 @@ public class CachedUnboxedDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
+            LexicalScope lexicalScope,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(assumptions);
@@ -71,6 +73,7 @@ public class CachedUnboxedDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects,
                     "class modified");
         }
@@ -81,6 +84,7 @@ public class CachedUnboxedDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
+                    lexicalScope,
                     argumentsObjects);
         }
 

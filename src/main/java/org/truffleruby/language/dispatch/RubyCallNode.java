@@ -30,8 +30,6 @@ import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.methods.BlockDefinitionNode;
 import org.truffleruby.language.methods.InternalMethod;
 
-import java.util.Map;
-
 public class RubyCallNode extends RubyNode {
 
     private final String methodName;
@@ -113,16 +111,14 @@ public class RubyCallNode extends RubyNode {
             }
         }
 
-        Map<DynamicObject, DynamicObject> refinements = null;
+        final LexicalScope lexicalScope;
         if(lexicalScopeNode != null){
-            final LexicalScope lexicalScope = (LexicalScope) lexicalScopeNode.execute(frame);
-            if(lexicalScope != null && !lexicalScope.getRefinements().isEmpty()){
-                refinements = lexicalScope.getRefinements();
-            }
+            lexicalScope = (LexicalScope) lexicalScopeNode.execute(frame);
+        } else {
+            lexicalScope = null;
         }
-        // TODO Pass refinements to dispatch
-
-        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
+        
+        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, lexicalScope, argumentsObjects);
         if (isAttrAssign) {
             return argumentsObjects[argumentsObjects.length - 1];
         } else {
@@ -247,7 +243,7 @@ public class RubyCallNode extends RubyNode {
             // TODO CS-10-Apr-17 I'd like to use this but it doesn't give the same result
             // lookupMethodNode.executeLookupMethod(frame, coreLibrary().getMetaClass(receiverObject), methodName);
 
-            return ModuleOperations.lookupMethodUncached(coreLibrary().getMetaClass(receiverObject), methodName);
+            return ModuleOperations.lookupMethodUncachedWithRefinements(coreLibrary().getMetaClass(receiverObject), methodName, null);
         }
 
         // TODO CS-10-Apr-17 remove this boundary

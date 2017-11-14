@@ -287,7 +287,7 @@ public class RubyContext {
         CompilerAsserts.neverPartOfCompilation();
         assert block == null || RubyGuards.isRubyProc(block);
 
-        final InternalMethod method = ModuleOperations.lookupMethodUncached(coreLibrary.getMetaClass(object), methodName);
+        final InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(coreLibrary.getMetaClass(object), methodName, null);
         if (method == null || method.isUndefined()) {
             return null;
         }

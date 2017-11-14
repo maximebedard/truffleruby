@@ -18,6 +18,7 @@ import org.truffleruby.core.array.ArrayUtils;
 import org.truffleruby.core.cast.NameToJavaStringNode;
 import org.truffleruby.core.cast.ToSymbolNode;
 import org.truffleruby.core.cast.ToSymbolNodeGen;
+import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.control.RaiseException;
@@ -63,6 +64,7 @@ public class UncachedDispatchNode extends DispatchNode {
             Object receiver,
             Object name,
             DynamicObject block,
+            LexicalScope lexicalScope,
             Object[] arguments) {
         assert !RubyGuards.isForeignObject(receiver) : "uncached dispatch not supported on foreign objects";
 

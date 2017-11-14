@@ -419,7 +419,7 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
 
     @TruffleBoundary
     public void undefMethod(RubyContext context, Node currentNode, String methodName) {
-        final InternalMethod method = ModuleOperations.lookupMethodUncached(rubyModuleObject, methodName);
+        final InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(rubyModuleObject, methodName, null);
         if (method == null || method.isUndefined()) {
             throw new RaiseException(context.getCoreExceptions().nameErrorUndefinedMethod(
                     methodName,
@@ -436,14 +436,14 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
      */
     @TruffleBoundary
     public InternalMethod deepMethodSearch(RubyContext context, String name) {
-        InternalMethod method = ModuleOperations.lookupMethodUncached(rubyModuleObject, name);
+        InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(rubyModuleObject, name, null);
         if (method != null && !method.isUndefined()) {
             return method;
         }
 
         // Also search on Object if we are a Module. JRuby calls it deepMethodSearch().
         if (!RubyGuards.isRubyClass(rubyModuleObject)) { // TODO: handle undefined methods
-            method = ModuleOperations.lookupMethodUncached(context.getCoreLibrary().getObjectClass(), name);
+            method = ModuleOperations.lookupMethodUncachedWithRefinements(context.getCoreLibrary().getObjectClass(), name, null);
 
             if (method != null && !method.isUndefined()) {
                 return method;
