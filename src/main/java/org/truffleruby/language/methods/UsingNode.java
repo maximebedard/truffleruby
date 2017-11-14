@@ -23,6 +23,7 @@ public abstract class UsingNode extends RubyNode {
 
     @Specialization(guards = "isRubyModule(module)")
     public DynamicObject using(LexicalScope scope, DynamicObject module) {
+        usingModuleRecursive(scope, module);
         return nil();
     }
 

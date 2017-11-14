@@ -253,7 +253,13 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
 
         newHierarchyVersion();
 
-        return inclusionPoint.getParentModule().getActualModule();
+        if(this.getParentModule() instanceof IncludedModule){
+            return ((IncludedModule)this.getParentModule()).getActualModule();
+        } else if(this.getParentModule() instanceof DynamicObject) {
+            return (DynamicObject) this.getParentModule();
+        } else {
+            return null;
+        }
     }
 
     public void performIncludes(ModuleChain inclusionPoint, Deque<DynamicObject> moduleAncestors) {
