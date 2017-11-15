@@ -67,7 +67,7 @@ public abstract class AddMethodNode extends RubyBaseNode {
     public void addMethodToModule(DynamicObject module, InternalMethod method) {
         final MethodLookupResult result = ModuleOperations.lookupMethodWithRefinements(module, method.getName(), null);
         if(result.getMethod() == null){
-            addMethodInternal(module, method, Visibility.PUBLIC);
+            addMethodInternal(module, method.withRefined(true), Visibility.PUBLIC);
         } else {
             addMethodInternal(module, result.getMethod().withRefined(true),  method.getVisibility());
         }
