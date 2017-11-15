@@ -9,7 +9,6 @@
  */
 package org.truffleruby.language.dispatch;
 
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
 
 public class RubyCallNodeParameters {
