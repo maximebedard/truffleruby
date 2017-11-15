@@ -304,11 +304,13 @@ public abstract class ModuleOperations {
             InternalMethod method = fields.getMethod(name);
             if (method != null) {
                 if (method.isRefined() &&
-                        lexicalScope != null &&
-                        !lexicalScope.getRefinements().isEmpty() &&
-                        lexicalScope.getRefinements().containsKey(module)) {
-                    // TODO BJF Need to pass assumptions here?
-                    return lookupMethodWithRefinements(lexicalScope.getRefinements().get(module), name, null);
+                        lexicalScope != null) {
+                    Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
+                    if (!allRefinements.isEmpty() &&
+                            allRefinements.containsKey(module)) {
+                        // TODO BJF Need to pass assumptions here?
+                        return lookupMethodWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                    }
                 }
                 return new MethodLookupResult(method, toArray(assumptions));
             }

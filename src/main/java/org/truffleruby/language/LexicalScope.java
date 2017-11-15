@@ -63,6 +63,15 @@ public class LexicalScope {
         return refinements;
     }
 
+    public Map<DynamicObject, DynamicObject> getRefinementsAllScopes() {
+        Map<DynamicObject, DynamicObject> results = new HashMap<>();
+        results.putAll(refinements);
+        if (this.getParent() != null) {
+            results.putAll(this.getParent().getRefinementsAllScopes());
+        }
+        return results;
+    }
+
     @Override
     public String toString() {
         return " :: " + liveModule + (parent == null ? "" : parent.toString());
