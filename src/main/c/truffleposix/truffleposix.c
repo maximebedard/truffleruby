@@ -212,56 +212,58 @@ int64_t truffleposix_clock_gettime(int clock) {
   return ((int64_t) timespec.tv_sec * 1000000000) + (int64_t) timespec.tv_nsec;
 }
 
-#define CHECK(call, label) if ((error = call) != 0) { perror(#call); goto label; }
+#define CHECK(call) if ((error = call) != 0) { perror(#call); return -error; }
 
-pid_t truffleposix_posix_spawnp(const char *command, char *const argv[], char *const envp[],
-                                int nredirects, int* redirects, int pgroup) {
-  int ret = -1;
-  pid_t pid = -1;
+static pid_t init_and_call_posix_spawnp(const char *command, char *const argv[], char *const envp[],
+                                        int nredirects, int* redirects, int pgroup,
+                                        posix_spawn_file_actions_t *file_actions,
+                                        posix_spawn_file_actions_t **file_actions_ptr,
+                                        posix_spawnattr_t *attrs,
+                                        posix_spawnattr_t **attrs_ptr) {
   int error = 0;
-  int called_posix_spawn = 0;
-
-  posix_spawn_file_actions_t *file_actions_ptr = NULL;
-  posix_spawn_file_actions_t file_actions;
   if (nredirects > 0) {
-    CHECK(posix_spawn_file_actions_init(&file_actions), end);
-    file_actions_ptr = &file_actions;
+    CHECK(posix_spawn_file_actions_init(file_actions));
+    *file_actions_ptr = file_actions;
     for (int i = 0; i < nredirects; i += 2) {
       int from = redirects[i];
       int to = redirects[i+1];
-      CHECK(posix_spawn_file_actions_adddup2(&file_actions, to, from), cleanup_actions);
+      CHECK(posix_spawn_file_actions_adddup2(file_actions, to, from));
     }
   }
 
-  posix_spawnattr_t *attrs_ptr = NULL;
-  posix_spawnattr_t attrs;
   if (pgroup >= 0) {
-    CHECK(posix_spawnattr_init(&attrs), cleanup_actions);
-    attrs_ptr = &attrs;
-    CHECK(posix_spawnattr_setflags(&attrs, POSIX_SPAWN_SETPGROUP), cleanup_attrs);
-    CHECK(posix_spawnattr_setpgroup(&attrs, pgroup), cleanup_attrs);
+    CHECK(posix_spawnattr_init(attrs));
+    *attrs_ptr = attrs;
+    CHECK(posix_spawnattr_setflags(attrs, POSIX_SPAWN_SETPGROUP));
+    CHECK(posix_spawnattr_setpgroup(attrs, pgroup));
   }
 
-  ret = posix_spawnp(&pid, command, file_actions_ptr, attrs_ptr, argv, envp);
-  called_posix_spawn = 1;
-
-cleanup_attrs:
-  if (attrs_ptr) {
-    posix_spawnattr_destroy(attrs_ptr);
-    attrs_ptr = NULL;
-  }
-cleanup_actions:
-  if (file_actions_ptr) {
-    posix_spawn_file_actions_destroy(file_actions_ptr);
-    file_actions_ptr = NULL;
-  }
-end:
-  if (!called_posix_spawn) {
-    return -error;
-  }
+  pid_t pid = -1;
+  int ret = posix_spawnp(&pid, command, file_actions, attrs, argv, envp);
   if (ret == 0) {
     return pid;
   } else {
     return -ret;
   }
+}
+
+pid_t truffleposix_posix_spawnp(const char *command, char *const argv[], char *const envp[],
+                                int nredirects, int* redirects, int pgroup) {
+  posix_spawn_file_actions_t *file_actions_ptr = NULL;
+  posix_spawn_file_actions_t file_actions;
+  posix_spawnattr_t *attrs_ptr = NULL;
+  posix_spawnattr_t attrs;
+  pid_t ret = init_and_call_posix_spawnp(command, argv, envp,
+                                         nredirects, redirects, pgroup,
+                                         &file_actions, &file_actions_ptr,
+                                         &attrs, &attrs_ptr);
+  if (attrs_ptr) {
+    posix_spawnattr_destroy(attrs_ptr);
+    attrs_ptr = NULL;
+  }
+  if (file_actions_ptr) {
+    posix_spawn_file_actions_destroy(file_actions_ptr);
+    file_actions_ptr = NULL;
+  }
+  return ret;
 }
