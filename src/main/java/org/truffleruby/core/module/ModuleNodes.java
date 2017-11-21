@@ -11,6 +11,7 @@ package org.truffleruby.core.module;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -27,7 +28,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -53,6 +53,8 @@ import org.truffleruby.core.cast.ToStrNodeGen;
 import org.truffleruby.core.cast.ToStringOrSymbolNodeGen;
 import org.truffleruby.core.constant.WarnAlreadyInitializedNode;
 import org.truffleruby.core.method.MethodFilter;
+import org.truffleruby.core.proc.ProcOperations;
+import org.truffleruby.core.proc.ProcType;
 import org.truffleruby.core.rope.CodeRange;
 import org.truffleruby.core.rope.Rope;
 import org.truffleruby.core.rope.RopeNodes;
@@ -98,6 +100,8 @@ import org.truffleruby.language.objects.ReadInstanceVariableNode;
 import org.truffleruby.language.objects.SingletonClassNode;
 import org.truffleruby.language.objects.SingletonClassNodeGen;
 import org.truffleruby.language.objects.WriteInstanceVariableNode;
+import org.truffleruby.language.yield.CallBlockNode;
+import org.truffleruby.language.yield.CallBlockNodeGen;
 import org.truffleruby.language.yield.YieldNode;
 import org.truffleruby.parser.Identifiers;
 import org.truffleruby.parser.ParserContext;
@@ -1047,33 +1051,48 @@ public abstract class ModuleNodes {
 
         @TruffleBoundary
         private DynamicObject defineMethod(DynamicObject module, String name, DynamicObject proc) {
-            final RootCallTarget callTarget = (RootCallTarget) Layouts.PROC.getCallTargetForLambdas(proc);
-            final RubyRootNode rootNode = (RubyRootNode) callTarget.getRootNode();
             final SharedMethodInfo info = Layouts.PROC.getSharedMethodInfo(proc).withName(name);
+            final RootCallTarget callTarget = (RootCallTarget) Layouts.PROC.getCallTargetForLambdas(proc);
 
-            final RubyNode body = NodeUtil.cloneNode(rootNode.getBody());
-            final RubyNode newBody = new CallMethodWithProcBody(Layouts.PROC.getDeclarationFrame(proc), body);
-            final RubyRootNode newRootNode = new RubyRootNode(getContext(), info.getSourceSection(), rootNode.getFrameDescriptor(), info, newBody);
-            final CallTarget newCallTarget = Truffle.getRuntime().createCallTarget(newRootNode);
-
+            final CallProcAsMethodNode body = new CallProcAsMethodNode();
+            final RubyRootNode rootNode = new RubyRootNode(getContext(), info.getSourceSection(), callTarget.getRootNode().getFrameDescriptor(), info, body);
+            final CallTarget newCallTarget = Truffle.getRuntime().createCallTarget(rootNode);
             final InternalMethod method = InternalMethod.fromProc(getContext(), info, name, module, Visibility.PUBLIC, proc, newCallTarget);
+
+            final DynamicObject procWithMethod = ProcOperations.createRubyProc(
+                    coreLibrary().getProcFactory(),
+                    ProcType.LAMBDA,
+                    info,
+                    callTarget,
+                    callTarget,
+                    Layouts.PROC.getDeclarationFrame(proc),
+                    method,
+                    nil(),
+                    null,
+                    null);
+
+            method.setMethodProc(procWithMethod);
+            body.proc = procWithMethod;
+
             return addMethod(module, name, method);
         }
 
-        private static class CallMethodWithProcBody extends RubyNode {
+        private static class CallProcAsMethodNode extends RubyNode {
 
-            private final MaterializedFrame declarationFrame;
-            @Child private RubyNode procBody;
+            private @CompilationFinal DynamicObject proc;
 
-            public CallMethodWithProcBody(MaterializedFrame declarationFrame, RubyNode procBody) {
-                this.declarationFrame = declarationFrame;
-                this.procBody = procBody;
+            @Child CallBlockNode callBlockNode;
+
+            public CallProcAsMethodNode() {
+                this.callBlockNode = insert(CallBlockNodeGen.create(DeclarationContext.METHOD, null, null, null, null));
             }
 
             @Override
             public Object execute(VirtualFrame frame) {
-                RubyArguments.setDeclarationFrame(frame, declarationFrame);
-                return procBody.execute(frame);
+                final Object self = RubyArguments.getSelf(frame);
+                final DynamicObject block = RubyArguments.getBlock(frame);
+                final Object[] arguments = RubyArguments.getArguments(frame);
+                return callBlockNode.executeCallBlock(proc, self, block, arguments);
             }
 
         }
