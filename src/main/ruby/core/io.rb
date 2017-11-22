@@ -121,19 +121,16 @@ class IO
       @eof = false
     end
 
-    ##
     # Returns +true+ if the buffer can be filled.
     def empty?
       @start == @used
     end
 
-    ##
     # Returns +true+ if the buffer is empty and cannot be filled further.
     def exhausted?
       @eof and empty?
     end
 
-    ##
     # Returns the number of bytes that could be written to the buffer.
     # If the number is less then the expected, then we need to +empty_to+
     # the IO, and +unshift+ again beginning at +start_pos+.
@@ -178,7 +175,6 @@ class IO
       bytes_read
     end
 
-    ##
     # A request to the buffer to have data. The buffer decides whether
     # existing data is sufficient, or whether to read more data from the
     # +IO+ instance. Any new data causes this method to return.
@@ -217,7 +213,6 @@ class IO
       size
     end
 
-    ##
     # Advances the beginning-of-buffer marker past any number
     # of contiguous characters == +skip+. For example, if +skip+
     # is ?\n and the buffer contents are "\n\n\nAbc...", the
@@ -229,7 +224,6 @@ class IO
       end
     end
 
-    ##
     # Returns the number of bytes to fetch from the buffer up-to-
     # and-including +pattern+. Returns +nil+ if pattern is not found.
     def find(pattern, discard = nil)
@@ -238,7 +232,6 @@ class IO
       end
     end
 
-    ##
     # Returns +true+ if the buffer is filled to capacity.
     def full?
       @total == @used
@@ -250,7 +243,6 @@ class IO
              object_id, @total, @start, @used, @storage, content
     end
 
-    ##
     # Resets the buffer state so the buffer can be filled again.
     def reset!
       @start = 0
@@ -276,7 +268,6 @@ class IO
       end
     end
 
-    ##
     # Returns +count+ bytes from the +start+ of the buffer as a new String.
     # If +count+ is +nil+, returns all available bytes in the buffer.
     def shift(count=nil)
@@ -313,7 +304,6 @@ class IO
       IO.read_encode io, str
     end
 
-    ##
     # Returns one Fixnum as the start byte.
     def getbyte(io)
       return if size == 0 and fill_from(io) == 0
@@ -344,7 +334,6 @@ class IO
       end
     end
 
-    ##
     # Prepends the byte +chr+ to the internal buffer, so that future
     # reads will return it.
     def put_back(chr)
@@ -360,13 +349,11 @@ class IO
       end
     end
 
-    ##
     # Returns the number of bytes available in the buffer.
     def size
       @used - @start
     end
 
-    ##
     # Returns the number of bytes of capacity remaining in the buffer.
     # This is the number of additional bytes that can be added to the
     # buffer before it is full.
