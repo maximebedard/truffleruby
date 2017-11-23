@@ -337,16 +337,19 @@ class IO
 
     # Prepends the byte +chr+ to the internal buffer, so that future
     # reads will return it.
-    def put_back(chr)
+    def put_back(str)
       # A simple case, which is common and can be done efficiently
-      if @start > 0
-        @start -= 1
-        @storage[@start] = chr
+      length = str.bytesize
+      if @start >= length
+        @start -= length
+        str.bytes.each_with_index { |byte, i|
+          @storage[@start+i] = byte
+        }
       else
-        @storage = @storage.prepend(chr.chr)
+        @storage = @storage.prepend(str)
+        @total += length
         @start = 0
-        @total = @storage.size
-        @used += 1
+        @used += length
       end
     end
 
@@ -2501,15 +2504,14 @@ class IO
     when String
       str = obj
     when Integer
-      @ibuffer.put_back(obj & 0xff)
-      return
+      str = (obj & 0xff).chr(Encoding::BINARY)
     when nil
       return
     else
       str = StringValue(obj)
     end
 
-    str.bytes.reverse_each { |byte| @ibuffer.put_back byte }
+    @ibuffer.put_back(str)
     nil
   end
 
@@ -2520,15 +2522,14 @@ class IO
     when String
       str = obj
     when Integer
-      @ibuffer.put_back(obj)
-      return
+      str = obj.chr(external_encoding || Encoding.default_external)
     when nil
       return
     else
       str = StringValue(obj)
     end
 
-    str.bytes.reverse_each { |b| @ibuffer.put_back b }
+    @ibuffer.put_back(str)
     nil
   end
 
