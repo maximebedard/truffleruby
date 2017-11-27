@@ -68,7 +68,7 @@ public abstract class ExceptionOperations {
     public static DynamicObject createRubyException(RubyContext context, DynamicObject rubyClass, Object message, Node node, Throwable javaException) {
         Backtrace backtrace = context.getCallStack().getBacktraceForException(node, rubyClass, javaException);
         context.getCoreExceptions().showExceptionIfDebug(rubyClass, message, backtrace);
-        return Layouts.EXCEPTION.createException(Layouts.CLASS.getInstanceFactory(rubyClass), message, backtrace);
+        return Layouts.EXCEPTION.createException(Layouts.CLASS.getInstanceFactory(rubyClass), message, null, backtrace);
     }
 
     // because the factory is not constant
@@ -76,6 +76,6 @@ public abstract class ExceptionOperations {
     public static DynamicObject createSystemCallError(RubyContext context, DynamicObject rubyClass, Object message, Node node, int errno) {
         Backtrace backtrace = context.getCallStack().getBacktraceForException(node, rubyClass);
         context.getCoreExceptions().showExceptionIfDebug(rubyClass, message, backtrace);
-        return Layouts.SYSTEM_CALL_ERROR.createSystemCallError(Layouts.CLASS.getInstanceFactory(rubyClass), message, backtrace, errno);
+        return Layouts.SYSTEM_CALL_ERROR.createSystemCallError(Layouts.CLASS.getInstanceFactory(rubyClass), message, null, backtrace, errno);
     }
 }

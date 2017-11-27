@@ -341,18 +341,38 @@ public abstract class BasicObjectNodes {
             Visibility visibility;
 
             if (lastCallWasSuper(relevantCallerFrame)) {
-                return coreExceptions().noSuperMethodError(name, self, args, this);
+                return coreExceptions().noMethodError(getSuperMethodErrorFormatter(), self, name, args, this);
             } else if ((visibility = lastCallWasCallingPrivateOrProtectedMethod(self, name)) != null) {
                 if (visibility.isPrivate()) {
-                    return coreExceptions().privateMethodError(name, self, args, this);
+                    return coreExceptions().noMethodError(getPrivateMethodErrorFormatter(), self, name, args, this);
                 } else {
-                    return coreExceptions().protectedMethodError(name, self, args, this);
+                    return coreExceptions().noMethodError(getProtectedMethodErrorFormatter(), self, name, args, this);
                 }
             } else if (lastCallWasVCall(relevantCallerFrame)) {
                 return coreExceptions().nameErrorUndefinedLocalVariableOrMethod(name, self, this);
             } else {
-                return coreExceptions().noMethodErrorOnReceiver(name, self, args, this);
+                return coreExceptions().noMethodError(getNoMethodErrorFormatter(), self, name, args, this);
             }
+        }
+
+        private DynamicObject getNoMethodErrorFormatter() {
+            return getConstant("NO_METHOD_ERROR");
+        }
+
+        private DynamicObject getPrivateMethodErrorFormatter() {
+            return getConstant("PRIVATE_METHOD_ERROR");
+        }
+
+        private DynamicObject getProtectedMethodErrorFormatter() {
+            return getConstant("PROTECTED_METHOD_ERROR");
+        }
+
+        private DynamicObject getSuperMethodErrorFormatter() {
+            return getConstant("SUPER_METHOD_ERROR");
+        }
+
+        private DynamicObject getConstant(String name) {
+            return (DynamicObject) ModuleOperations.lookupConstant(getContext(), coreLibrary().getTruffleExceptionOperationsModule(), name).getConstant().getValue();
         }
 
         private FrameInstance getRelevantCallerFrame() {

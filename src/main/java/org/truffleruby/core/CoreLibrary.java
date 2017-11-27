@@ -172,6 +172,7 @@ public class CoreLibrary {
     private final DynamicObject rubiniusTypeModule;
     private final DynamicObject truffleModule;
     private final DynamicObject truffleBootModule;
+    private final DynamicObject truffleExceptionOperationsModule;
     private final DynamicObject truffleInteropModule;
     private final DynamicObject truffleInteropForeignClass;
     private final DynamicObject truffleInteropJavaModule;
@@ -495,6 +496,7 @@ public class CoreLibrary {
         Layouts.CLASS.setInstanceFactoryUnsafe(encodingConverterClass, Layouts.ENCODING_CONVERTER.createEncodingConverterShape(encodingConverterClass, encodingConverterClass));
 
         truffleModule = defineModule("Truffle");
+        truffleExceptionOperationsModule = defineModule(truffleModule, "ExceptionOperations");
         truffleInteropModule = defineModule(truffleModule, "Interop");
         truffleInteropForeignClass = defineClass(truffleInteropModule, objectClass, "Foreign");
         truffleInteropJavaModule = defineModule(truffleInteropModule, "Java");
@@ -1420,6 +1422,10 @@ public class CoreLibrary {
         return truffleBootModule;
     }
 
+    public DynamicObject getTruffleExceptionOperationsModule() {
+        return truffleExceptionOperationsModule;
+    }
+
     public DynamicObject getTruffleInteropModule() {
         return truffleInteropModule;
     }
@@ -1462,8 +1468,9 @@ public class CoreLibrary {
             "/core/kernel.rb", // Needed before boot.rb since binding is now in Ruby.
             "/core/truffle/boot.rb",
             "/core/truffle/debug.rb",
-            "/core/truffle/string_operations.rb",
+            "/core/truffle/exception_operations.rb",
             "/core/truffle/regexp_operations.rb",
+            "/core/truffle/string_operations.rb",
             "/core/splitter.rb",
             "/core/stat.rb",
             "/core/io.rb",
