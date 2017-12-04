@@ -56,4 +56,17 @@ describe "NoMethodError#message" do
       e.message.match(/private method/).should_not == nil
     end
   end
+
+  it "does not call inspect if the error is rescued" do
+    begin
+      Class.new do
+        def inspect
+          send :foo
+        end
+      end.new.bar
+    rescue Exception => e
+      e.should be_kind_of(NoMethodError)
+      e.name.should == :bar
+    end
+  end
 end
