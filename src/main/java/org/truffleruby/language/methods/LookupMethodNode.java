@@ -108,7 +108,7 @@ public abstract class LookupMethodNode extends RubyNode {
                 onMetaClassProfile.profile((topMethod = fields.getMethod(name)) != null)) {
             method = topMethod;
         } else {
-            method = ModuleOperations.lookupMethodUncached(metaClass, name);
+            method = ModuleOperations.lookupMethodUncachedWithRefinements(metaClass, name, null);
         }
 
         if (notFoundProfile.profile(method == null || method.isUndefined())) {
