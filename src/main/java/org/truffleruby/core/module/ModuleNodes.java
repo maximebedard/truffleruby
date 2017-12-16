@@ -1899,7 +1899,7 @@ public abstract class ModuleNodes {
 //            LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
 
             ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
-            ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = Layouts.MODULE.getFields(self).getActivatedRefinements();
+//            ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = Layouts.MODULE.getFields(self).getActivatedRefinements();
 
             DynamicObject refinement = refinements.get(classToRefine);
             if(refinement == null){
@@ -1920,18 +1920,18 @@ public abstract class ModuleNodes {
             return refinement;
         }
 
-        private void addActivatedRefinement(ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements, DynamicObject classToRefine, DynamicObject refinement) {
-            DynamicObject refinementClass = activatedRefinements.get(classToRefine);
-            if(refinementClass == null){
-                // TODO BJF return if already refined
-            }
-
-            final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
-            refinementFields.setOverlaid(true);
-
-            final DynamicObject includedRefinement = Layouts.MODULE.getFields(classToRefine).includeModule(getContext(), refinement);
-            activatedRefinements.put(classToRefine, includedRefinement);
-        }
+//        private void addActivatedRefinement(ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements, DynamicObject classToRefine, DynamicObject refinement) {
+//            DynamicObject refinementClass = activatedRefinements.get(classToRefine);
+//            if(refinementClass == null){
+//                // TODO BJF return if already refined
+//            }
+//
+//            final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
+//            refinementFields.setOverlaid(true);
+//
+//            final DynamicObject includedRefinement = Layouts.MODULE.getFields(classToRefine).includeModule(getContext(), refinement);
+//            activatedRefinements.put(classToRefine, includedRefinement);
+//        }
 
     }
 
