@@ -87,7 +87,11 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     private final ConcurrentMap<String, InternalMethod> methods = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RubyConstant> constants = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Object> classVariables = new ConcurrentHashMap<>();
+
+    // Maps a refined class to refinement module
     private final ConcurrentMap<DynamicObject, DynamicObject> refinements = new ConcurrentHashMap<>();
+
+    // Maps a refined class to activated refinement module
     private final ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = new ConcurrentHashMap<>();
 
     private final CyclicAssumption methodsUnmodifiedAssumption;

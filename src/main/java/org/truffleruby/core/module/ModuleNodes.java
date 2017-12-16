@@ -1899,7 +1899,7 @@ public abstract class ModuleNodes {
 //            LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
 
             ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
-            ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = Layouts.MODULE.getFields(self).getRefinements();
+            ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = Layouts.MODULE.getFields(self).getActivatedRefinements();
 
             DynamicObject refinement = refinements.get(classToRefine);
             if(refinement == null){
