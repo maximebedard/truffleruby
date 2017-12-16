@@ -42,11 +42,6 @@ class << self
     end
   end
 
-  def using(mod)
-    Truffle.invoke_primitive(:main_using, mod)
-    self
-  end
-
   def define_method(*args, &block)
     Truffle.privately do
       Object.define_method(*args, &block)

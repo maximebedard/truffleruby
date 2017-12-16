@@ -53,26 +53,26 @@ public abstract class MainNodes {
         }
     }
 
-    @Primitive(name = "main_using")
+    @CoreMethod(names = "using", required = 1, needsSelf = false)
     public abstract static class MainUsingNode extends CoreMethodArrayArgumentsNode {
 
         @Child private UsingNode usingNode = UsingNodeGen.create(null, null);
 
-        @Specialization
-        public DynamicObject mainUsing(VirtualFrame frame, DynamicObject refineModule) {
+        @Specialization(guards = "isRubyModule(refinementModule)")
+        public DynamicObject mainUsing(VirtualFrame frame, DynamicObject refinementModule) {
             if(!isCalledFromTopLevel()){
                 throw new RaiseException(coreExceptions().runtimeError("main.using is permitted only at toplevel", this));
             }
             InternalMethod method = getContext().getCallStack().getCallingMethodIgnoringSend();
             LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
-            usingNode.executeUsing(lexicalScope, refineModule);
+            usingNode.executeUsing(lexicalScope, refinementModule);
             return nil();
         }
 
         @TruffleBoundary
         public boolean isCalledFromTopLevel(){
             // TODO BJF Review for correct way to determine toplevel
-            return getContext().getCallStack().getCallerFrameIgnoringSend(3) == null;
+            return true;
         }
 
     }
