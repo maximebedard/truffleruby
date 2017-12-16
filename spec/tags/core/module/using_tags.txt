@@ -1,5 +1,4 @@
 fails:Module#using imports class refinements from module into the current class/module
-fails:Module#using does not accept class
 fails:Module#using works in classes too
 fails:Module#using raises error in method scope
 fails:Module#using scope of refinement is active until the end of current class/module

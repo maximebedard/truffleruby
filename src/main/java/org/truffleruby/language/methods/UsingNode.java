@@ -7,7 +7,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.Layouts;
 import org.truffleruby.language.LexicalScope;
+import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.RubyNode;
+import org.truffleruby.language.control.RaiseException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -22,6 +24,9 @@ public abstract class UsingNode extends RubyNode {
 
     @Specialization(guards = "isRubyModule(module)")
     public DynamicObject using(LexicalScope scope, DynamicObject module) {
+        if(RubyGuards.isRubyClass(module)){
+            throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(module, "Module", this));
+        }
         usingModuleRecursive(scope, module);
         return nil();
     }
