@@ -303,16 +303,22 @@ public abstract class ModuleOperations {
             assumptions.add(fields.getMethodsUnmodifiedAssumption());
             InternalMethod method = fields.getMethod(name);
             if (method != null) {
-                if (method.isRefined() &&
-                        lexicalScope != null) {
-                    Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
-                    if (!allRefinements.isEmpty() &&
+                if (method.isRefined()) {
+                    if (lexicalScope != null) {
+                        Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
+                        if (!allRefinements.isEmpty() &&
                             allRefinements.containsKey(module)) {
-                        // TODO BJF Need to pass assumptions here?
-                        return lookupMethodCachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                            // TODO BJF Need to pass assumptions here?
+                            return lookupMethodCachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                        }
                     }
+                    if (method.getOriginalMethod() != null) {
+                        return new MethodLookupResult(method.getOriginalMethod(), toArray(assumptions));
+                    }
+                } else {
+                    return new MethodLookupResult(method, toArray(assumptions));
                 }
-                return new MethodLookupResult(method, toArray(assumptions));
+
             }
         }
 
@@ -327,16 +333,22 @@ public abstract class ModuleOperations {
             final ModuleFields fields = Layouts.MODULE.getFields(ancestor);
             final InternalMethod method = fields.getMethod(name);
             if (method != null) {
-                if (method.isRefined() &&
-                    lexicalScope != null) {
-                    Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
-                    if (!allRefinements.isEmpty() &&
-                        allRefinements.containsKey(module)) {
-                        // TODO BJF Need to pass assumptions here?
-                        return lookupMethodUncachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                if (method.isRefined()) {
+                    if (lexicalScope != null) {
+                        Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
+                        if (!allRefinements.isEmpty() &&
+                            allRefinements.containsKey(module)) {
+                            // TODO BJF Need to pass assumptions here?
+                            return lookupMethodUncachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                        }
                     }
+                    if (method.getOriginalMethod() != null) {
+                        return method.getOriginalMethod();
+                    }
+                } else {
+                    return method;
                 }
-                return method;
+
             }
         }
 

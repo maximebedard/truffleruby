@@ -1910,7 +1910,9 @@ public abstract class ModuleNodes {
                 refinementFields.setRefinedClass(classToRefine);
                 refinementFields.setDefinedAt(self);
                 refinements.put(classToRefine, refinement);
-                addActivatedRefinement(activatedRefinements, classToRefine, refinement);
+
+                // TODO BJF Enable these once they can be yielded below
+//                addActivatedRefinement(activatedRefinements, classToRefine, refinement);
             }
 
             // TODO BJF add the activated refinements to the yield scope

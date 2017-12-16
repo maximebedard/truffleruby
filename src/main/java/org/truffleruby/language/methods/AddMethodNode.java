@@ -69,7 +69,7 @@ public abstract class AddMethodNode extends RubyBaseNode {
         if(result.getMethod() == null){
             addMethodInternal(module, method.withRefined(true), Visibility.PUBLIC);
         } else {
-            addMethodInternal(module, result.getMethod().withRefined(true),  method.getVisibility());
+            addMethodInternal(module, result.getMethod().withOriginalMethod(result.getMethod()).withRefined(true),  method.getVisibility());
         }
     }
 

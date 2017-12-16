@@ -1,5 +1,3 @@
-fails:Module#refine doesn't apply refinements outside the refine block
-fails:Module#refine does not apply refinements to external scopes not using the module
 fails:Module#refine does not make available methods from another refinement module
 fails:Module#refine method lookup looks in prepended modules from the refinement first
 fails:Module#refine method lookup looks in included modules from the refinement then
@@ -11,3 +9,4 @@ fails:Module#refine when super is called in a refinement looks in the refined cl
 fails:Module#refine when super is called in a refinement looks in the refined class even if there is another active refinement
 fails:Module#refine module inclusion overrides methods of ancestors by methods in descendants
 fails:Module#refine for methods accesses indirectly is honored by Kernel#binding
+fails:Module#refine applies refinements to calls in the refine block
