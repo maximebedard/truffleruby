@@ -207,7 +207,8 @@ public class CoreMethodNodeManager {
             if (ModuleOperations.isMethodPrivateFromName(name)) {
                 visibility = Visibility.PRIVATE;
             }
-            final InternalMethod method = new InternalMethod(context, sharedMethodInfo, sharedMethodInfo.getLexicalScope(), name, module, visibility, false, callTarget);
+            // TODO BJF Review declaration context
+            final InternalMethod method = new InternalMethod(context, sharedMethodInfo, sharedMethodInfo.getLexicalScope(), null, name, module, visibility, false, callTarget);
 
             Layouts.MODULE.getFields(module).addMethod(context, null, method);
         }

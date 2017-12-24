@@ -188,7 +188,14 @@ public abstract class CachedDispatchNode extends DispatchNode {
         }
 
         MaterializedFrame callerFrame = getFrameIfRequired(frame);
-        return callNode.call(RubyArguments.pack(null, callerFrame, method, DeclarationContext.METHOD, null, receiver, block, arguments));
+        // TODO BJF Review changing this from METHOD
+        final DeclarationContext declarationContext;
+        if (method.getDeclarationContext() != null) {
+            declarationContext = method.getDeclarationContext();
+        } else {
+            declarationContext = DeclarationContext.METHOD;
+        }
+        return callNode.call(RubyArguments.pack(null, callerFrame, method, declarationContext, null, receiver, block, arguments));
     }
 
     private MaterializedFrame getFrameIfRequired(VirtualFrame frame) {

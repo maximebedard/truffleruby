@@ -403,7 +403,9 @@ public abstract class ModuleNodes {
             final RubyNode sequence = Translator.sequence(sourceIndexLength, Arrays.asList(checkArity, accessInstanceVariable));
             final RubyRootNode rootNode = new RubyRootNode(getContext(), sourceSection, null, sharedMethodInfo, sequence);
             final CallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-            final InternalMethod method = new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, accessorName, module, visibility, false, callTarget);
+
+            // TODO BJF Review declarationContext
+            final InternalMethod method = new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, null, accessorName, module, visibility, false, callTarget);
 
             Layouts.MODULE.getFields(module).addMethod(getContext(), this, method);
         }
@@ -1033,7 +1035,7 @@ public abstract class ModuleNodes {
         public DynamicObject defineMethodMethod(DynamicObject module, String name, DynamicObject methodObject, NotProvided block,
                 @Cached("createCanBindMethodToModuleNode()") CanBindMethodToModuleNode canBindMethodToModuleNode) {
             final InternalMethod method;
-            if(Layouts.MODULE.getFields(module).isRefinement()){
+            if (Layouts.MODULE.getFields(module).isRefinement()) {
                 method = Layouts.METHOD.getMethod(methodObject).withRefined(true);
             } else {
                 method = Layouts.METHOD.getMethod(methodObject);
@@ -1078,7 +1080,8 @@ public abstract class ModuleNodes {
             final RubyRootNode newRootNode = new RubyRootNode(getContext(), info.getSourceSection(), rootNode.getFrameDescriptor(), info, newBody);
             final CallTarget newCallTarget = Truffle.getRuntime().createCallTarget(newRootNode);
 
-            final InternalMethod method = InternalMethod.fromProc(getContext(), info, name, module, Visibility.PUBLIC, proc, newCallTarget);
+            // Fix declaration context, probably from caller frame
+            final InternalMethod method = InternalMethod.fromProc(getContext(), info, null, name, module, Visibility.PUBLIC, proc, newCallTarget);
             return addMethod(module, name, method);
         }
 
@@ -1902,7 +1905,7 @@ public abstract class ModuleNodes {
 //            ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements = Layouts.MODULE.getFields(self).getActivatedRefinements();
 
             DynamicObject refinement = refinements.get(classToRefine);
-            if(refinement == null){
+            if (refinement == null) {
                 refinement = (DynamicObject) newModuleNode.call(frame, getContext().getCoreLibrary().getModuleClass(), "new");
                 final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
 //                Layouts.MODULE.setSuperclass(refinement, klass); // We don't set superclasses on modules
@@ -1939,13 +1942,11 @@ public abstract class ModuleNodes {
     @CoreMethod(names = "using", required = 1, visibility = Visibility.PRIVATE)
     public abstract static class ModuleUsingNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private UsingNode usingNode = UsingNodeGen.create(null, null);
+        @Child private UsingNode usingNode = UsingNodeGen.create(null);
 
         @Specialization
         public DynamicObject moduleUsing(VirtualFrame frame, DynamicObject self, DynamicObject refinementModule) {
-            InternalMethod method = getContext().getCallStack().getCallingMethodIgnoringSend();
-            LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
-            usingNode.executeUsing(lexicalScope, refinementModule);
+            usingNode.executeUsing(refinementModule);
             return self;
         }
 

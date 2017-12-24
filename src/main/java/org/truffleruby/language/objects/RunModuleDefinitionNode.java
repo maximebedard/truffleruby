@@ -41,8 +41,12 @@ public class RunModuleDefinitionNode extends RubyNode {
         definitionMethod.execute(frame); // for tracing
         final InternalMethod definition = definitionMethod.createMethod(frame, lexicalScope, module);
 
+        final DeclarationContext moduleParentContext = RubyArguments.getDeclarationContext(frame);
+        assert  moduleParentContext != null;
+        final DeclarationContext newContext = moduleParentContext.newCloneLexicalScope();
+
         return callModuleDefinitionNode.call(definition.getCallTarget(), RubyArguments.pack(
-                null, null, definition, DeclarationContext.MODULE, null, module, null, RubyNode.EMPTY_ARGUMENTS));
+                null, null, definition, newContext, null, module, null, RubyNode.EMPTY_ARGUMENTS));
     }
 
 }

@@ -1,7 +1,1 @@
-fails:Module#using imports class refinements from module into the current class/module
-fails:Module#using works in classes too
 fails:Module#using raises error in method scope
-fails:Module#using scope of refinement is active until the end of current class/module
-fails:Module#using scope of refinement is not active before the `using` call
-fails:Module#using scope of refinement is not active for code defined outside the current scope
-fails:Module#using scope of refinement is not active when class/module reopens

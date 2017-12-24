@@ -16,13 +16,10 @@ import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
-import org.truffleruby.builtins.Primitive;
 import org.truffleruby.core.module.ModuleNodes;
 import org.truffleruby.core.module.ModuleNodesFactory;
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.Visibility;
 import org.truffleruby.language.control.RaiseException;
-import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.methods.UsingNode;
 import org.truffleruby.language.methods.UsingNodeGen;
 
@@ -56,21 +53,19 @@ public abstract class MainNodes {
     @CoreMethod(names = "using", required = 1, needsSelf = false)
     public abstract static class MainUsingNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private UsingNode usingNode = UsingNodeGen.create(null, null);
+        @Child private UsingNode usingNode = UsingNodeGen.create(null);
 
         @Specialization(guards = "isRubyModule(refinementModule)")
         public DynamicObject mainUsing(VirtualFrame frame, DynamicObject refinementModule) {
-            if(!isCalledFromTopLevel()){
+            if (!isCalledFromTopLevel()) {
                 throw new RaiseException(coreExceptions().runtimeError("main.using is permitted only at toplevel", this));
             }
-            InternalMethod method = getContext().getCallStack().getCallingMethodIgnoringSend();
-            LexicalScope lexicalScope = method == null ? null : method.getSharedMethodInfo().getLexicalScope();
-            usingNode.executeUsing(lexicalScope, refinementModule);
+            usingNode.executeUsing(refinementModule);
             return nil();
         }
 
         @TruffleBoundary
-        public boolean isCalledFromTopLevel(){
+        public boolean isCalledFromTopLevel() {
             // TODO BJF Review for correct way to determine toplevel
             return true;
         }

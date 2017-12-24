@@ -81,7 +81,9 @@ public class LazyRubyRootNode extends RubyBaseRootNode implements InternalRootNo
             callNode.forceInlining();
 
             mainObject = context.getCoreLibrary().getMainObject();
-            method = new InternalMethod(context, rootNode.getSharedMethodInfo(), rootNode.getSharedMethodInfo().getLexicalScope(),
+
+            // TODO BJF Review declaration context
+            method = new InternalMethod(context, rootNode.getSharedMethodInfo(), rootNode.getSharedMethodInfo().getLexicalScope(), null,
                     rootNode.getSharedMethodInfo().getName(), context.getCoreLibrary().getObjectClass(), Visibility.PUBLIC, false, callTarget);
         }
 
@@ -89,7 +91,7 @@ public class LazyRubyRootNode extends RubyBaseRootNode implements InternalRootNo
                 null,
                 null,
                 method,
-                DeclarationContext.TOP_LEVEL,
+                DeclarationContext.MODULE,
                 null,
                 mainObject,
                 null,

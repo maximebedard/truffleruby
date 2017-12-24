@@ -24,10 +24,10 @@ import org.truffleruby.core.cast.BooleanCastNodeGen;
 import org.truffleruby.core.cast.ProcOrNullNode;
 import org.truffleruby.core.cast.ProcOrNullNodeGen;
 import org.truffleruby.core.module.ModuleOperations;
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.methods.BlockDefinitionNode;
+import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 
 public class RubyCallNode extends RubyNode {
@@ -36,7 +36,7 @@ public class RubyCallNode extends RubyNode {
 
     @Child private RubyNode receiver;
     @Child private ProcOrNullNode block;
-    @Child private RubyNode lexicalScopeNode;
+    @Child private RubyNode declarationContextNode;
     @Children private final RubyNode[] arguments;
 
     private final boolean isSplatted;
@@ -67,7 +67,7 @@ public class RubyCallNode extends RubyNode {
         this.isVCall = parameters.isVCall();
         this.isSafeNavigation = parameters.isSafeNavigation();
         this.isAttrAssign = parameters.isAttrAssign();
-        this.lexicalScopeNode = parameters.getLexicalScope();
+        this.declarationContextNode = parameters.getDeclarationContext();
 
         if (parameters.isSafeNavigation()) {
             nilProfile = ConditionProfile.createCountingProfile();
@@ -111,14 +111,14 @@ public class RubyCallNode extends RubyNode {
             }
         }
 
-        final LexicalScope lexicalScope;
-        if(lexicalScopeNode != null){
-            lexicalScope = (LexicalScope) lexicalScopeNode.execute(frame);
+        final DeclarationContext declarationContext;
+        if (declarationContextNode != null) {
+            declarationContext = (DeclarationContext) declarationContextNode.execute(frame);
         } else {
-            lexicalScope = null;
+            declarationContext = RubyArguments.getDeclarationContext(frame);
         }
         
-        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, lexicalScope, argumentsObjects);
+        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, declarationContext, argumentsObjects);
         if (isAttrAssign) {
             return argumentsObjects[argumentsObjects.length - 1];
         } else {

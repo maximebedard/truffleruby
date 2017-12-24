@@ -22,18 +22,18 @@ public class RubyCallNodeParameters {
     private final boolean isVCall;
     private final boolean isSafeNavigation;
     private final boolean isAttrAssign;
-    private final RubyNode lexicalScope;
+    private final RubyNode declarationContext;
 
     public RubyCallNodeParameters(
             RubyNode receiver, String methodName, RubyNode block, RubyNode[] arguments,
-            boolean isSplatted, boolean ignoreVisibility, RubyNode lexicalScope) {
-        this(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, false, false, false, lexicalScope);
+            boolean isSplatted, boolean ignoreVisibility, RubyNode declarationContext) {
+        this(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, false, false, false, declarationContext);
     }
 
     public RubyCallNodeParameters(
             RubyNode receiver, String methodName, RubyNode block, RubyNode[] arguments,
             boolean isSplatted, boolean ignoreVisibility,
-            boolean isVCall, boolean isSafeNavigation, boolean isAttrAssign, RubyNode lexicalScope) {
+            boolean isVCall, boolean isSafeNavigation, boolean isAttrAssign, RubyNode declarationContext) {
         this.receiver = receiver;
         this.methodName = methodName;
         this.block = block;
@@ -43,11 +43,11 @@ public class RubyCallNodeParameters {
         this.isVCall = isVCall;
         this.isSafeNavigation = isSafeNavigation;
         this.isAttrAssign = isAttrAssign;
-        this.lexicalScope = lexicalScope;
+        this.declarationContext = declarationContext;
     }
 
     public RubyCallNodeParameters withReceiverAndArguments(RubyNode receiver, RubyNode[] arguments, RubyNode block) {
-        return new RubyCallNodeParameters(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, isVCall, isSafeNavigation, isAttrAssign, lexicalScope);
+        return new RubyCallNodeParameters(receiver, methodName, block, arguments, isSplatted, ignoreVisibility, isVCall, isSafeNavigation, isAttrAssign, declarationContext);
     }
 
     public RubyNode getReceiver() {
@@ -86,7 +86,7 @@ public class RubyCallNodeParameters {
         return isAttrAssign;
     }
 
-    public RubyNode getLexicalScope() {
-        return lexicalScope;
+    public RubyNode getDeclarationContext() {
+        return declarationContext;
     }
 }

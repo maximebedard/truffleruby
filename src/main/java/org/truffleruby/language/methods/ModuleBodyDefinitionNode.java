@@ -65,7 +65,8 @@ public class ModuleBodyDefinitionNode extends RubyNode {
 
         final LexicalScope parentLexicalScope = RubyArguments.getMethod(frame).getLexicalScope();
         final LexicalScope lexicalScope = prepareLexicalScope(staticLexicalScope, parentLexicalScope, module);
-        return new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, name, module, Visibility.PUBLIC, false, false, null, callTarget, capturedBlock, null);
+        // TODO BJF Review declarationContext
+        return new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, null, name, module, Visibility.PUBLIC, false, false, null, callTarget, capturedBlock, null);
     }
 
     @TruffleBoundary

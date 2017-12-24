@@ -19,6 +19,9 @@ import org.truffleruby.language.Visibility;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.objects.SingletonClassNode;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Declaration context for methods:
  * <ul>
@@ -35,12 +38,19 @@ public class DeclarationContext {
         SELF
     }
 
+    private final Map<DynamicObject, DynamicObject> refinements;
+
     public final Visibility visibility;
     public final DefaultDefinee defaultDefinee;
 
-    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee) {
+    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject> refinements) {
         this.visibility = visibility;
         this.defaultDefinee = defaultDefinee;
+        this.refinements = refinements;
+    }
+
+    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee) {
+        this(visibility, defaultDefinee, new HashMap<>());
     }
 
     @TruffleBoundary
@@ -77,9 +87,32 @@ public class DeclarationContext {
         changeVisibility(callerFrame, visibility);
     }
 
+    @TruffleBoundary
+    public static void setRefinements(Frame callerFrame, DeclarationContext declarationContext, Map<DynamicObject, DynamicObject> refinements) {
+        RubyArguments.setDeclarationContext(callerFrame, declarationContext.withRefinements(refinements));
+    }
+
+    private DeclarationContext withRefinements(Map<DynamicObject, DynamicObject> refinements) {
+        assert refinements != null;
+        return new DeclarationContext(visibility, defaultDefinee, refinements);
+    }
+
     private DeclarationContext withVisibility(Visibility visibility) {
         assert visibility != null;
-        return new DeclarationContext(visibility, defaultDefinee);
+        return new DeclarationContext(visibility, defaultDefinee, refinements);
+    }
+
+    public DeclarationContext withDefaultDefinee(DefaultDefinee newDefaultDefinee) {
+        assert newDefaultDefinee != null;
+        return new DeclarationContext(visibility, newDefaultDefinee, refinements);
+    }
+
+    public Map<DynamicObject, DynamicObject> getRefinements() {
+        return refinements;
+    }
+
+    public DeclarationContext newCloneLexicalScope() {
+        return new DeclarationContext(Visibility.PUBLIC, DefaultDefinee.LEXICAL_SCOPE, refinements);
     }
 
     @TruffleBoundary

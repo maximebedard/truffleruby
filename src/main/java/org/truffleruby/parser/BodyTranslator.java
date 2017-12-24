@@ -722,7 +722,7 @@ public class BodyTranslator extends Translator {
         final SourceIndexLength enclosingSourceSection = enclosing(sourceSection, children.toArray(new RubyNode[children.size()]));
 
         RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, methodName, argumentsAndBlock.getBlock(), argumentsAndBlock.getArguments(), argumentsAndBlock.isSplatted(), privately || ignoreVisibility, isVCall, node.isLazy(), isAttrAssign,
-                getLexicalScopeNode("call method", sourceSection));
+                null); //getLexicalScopeNode("call method", sourceSection)
 
         RubyNode translated = Translator.withSourceSection(enclosingSourceSection, context.getCoreMethods().createCallNode(callParameters));
 
@@ -893,7 +893,7 @@ public class BodyTranslator extends Translator {
                     arguments = new RubyNode[]{ rubyExpression, NodeUtil.cloneNode(readTemp) };
                 }
                 final RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, method, null, arguments, false, true,
-                    getLexicalScopeNode("case method call", sourceSection));
+                            null);
                 final RubyNode conditionNode = Translator.withSourceSection(sourceSection, new RubyCallNode(callParameters));
 
                 // Create the if node

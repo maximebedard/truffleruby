@@ -14,8 +14,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.core.module.MethodLookupResult;
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyNode;
+import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.LookupMethodNode;
 
 public abstract class DispatchNode extends RubyNode {
@@ -43,18 +43,18 @@ public abstract class DispatchNode extends RubyNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             Object[] argumentsObjects);
 
     protected MethodLookupResult lookup(
-            VirtualFrame frame,
-            Object receiver,
-            String name,
-            boolean ignoreVisibility,
-            boolean onlyCallPublic,
-            LexicalScope lexicalScope) {
+        VirtualFrame frame,
+        Object receiver,
+        String name,
+        boolean ignoreVisibility,
+        boolean onlyCallPublic,
+        DeclarationContext declarationContext) {
         final MethodLookupResult method = LookupMethodNode.lookupMethodCachedWithVisibility(getContext(),
-                frame, receiver, name, ignoreVisibility, onlyCallPublic, lexicalScope);
+                frame, receiver, name, ignoreVisibility, onlyCallPublic, declarationContext);
         if (dispatchAction == DispatchAction.RESPOND_TO_METHOD && method.isDefined() && method.getMethod().isUnimplemented()) {
             return method.withNoMethod();
         }
@@ -66,7 +66,7 @@ public abstract class DispatchNode extends RubyNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             Object[] argumentsObjects,
             String reason) {
         final DispatchHeadNode head = getHeadNode();
@@ -76,7 +76,7 @@ public abstract class DispatchNode extends RubyNode {
                 receiverObject,
                 methodName,
                 blockObject,
-                null, // TODO BJF Review
+                declarationContext, // TODO BJF Review
                 argumentsObjects);
     }
 

@@ -90,6 +90,7 @@ public class CodeLoader {
                 context,
                 rootNode.getSharedMethodInfo(),
                 lexicalScope,
+                DeclarationContext.MODULE,
                 rootNode.getSharedMethodInfo().getName(),
                 declaringModule,
                 Visibility.PUBLIC,

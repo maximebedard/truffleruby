@@ -4,54 +4,64 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.Layouts;
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.RubyNode;
+import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.control.RaiseException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 @NodeChildren({
-        @NodeChild("scopeNode"),
+//        @NodeChild("scopeNode"),
         @NodeChild("moduleNode")
 })
 public abstract class UsingNode extends RubyNode {
 
-    public abstract DynamicObject executeUsing(LexicalScope scope, DynamicObject module);
+    public abstract DynamicObject executeUsing(DynamicObject module);
 
     @Specialization(guards = "isRubyModule(module)")
-    public DynamicObject using(LexicalScope scope, DynamicObject module) {
-        if(RubyGuards.isRubyClass(module)){
+    public DynamicObject using(DynamicObject module) {
+        final Frame callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameInstance.FrameAccess.READ_WRITE);
+        if (RubyGuards.isRubyClass(module)) {
             throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(module, "Module", this));
         }
-        usingModuleRecursive(scope, module);
+        final DeclarationContext declarationContext = RubyArguments.getDeclarationContext(callerFrame);
+        Map<DynamicObject, DynamicObject> newRefinements = usingModuleRecursive(declarationContext, module);
+        DeclarationContext.setRefinements(callerFrame, declarationContext, newRefinements);
         return nil();
     }
 
     @TruffleBoundary
-    private void usingModuleRecursive(LexicalScope scope, DynamicObject module){
+    private Map<DynamicObject, DynamicObject> usingModuleRecursive(DeclarationContext declarationContext, DynamicObject module) {
         // TODO BJF Review/add activating refinements recursively in module parents
         ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(module).getRefinements();
-        if(refinements.isEmpty()){
-            return;
+        Map<DynamicObject, DynamicObject> newRefinements = new HashMap<>();
+        if (refinements.isEmpty()) {
+            return newRefinements;
         }
         for (Map.Entry<DynamicObject, DynamicObject> entry : refinements.entrySet()) {
-            usingRefinement(entry.getKey(), entry.getValue(), scope);
+            usingRefinement(entry.getKey(), entry.getValue(), declarationContext, newRefinements);
         }
+        return newRefinements;
     }
 
-    private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, LexicalScope lexicalScope){
-        Map<DynamicObject, DynamicObject> scopeRefinements = lexicalScope.getRefinements();
-        if(scopeRefinements.containsKey(refinedClass)){
+    private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, DeclarationContext declarationContext,
+                                 Map<DynamicObject, DynamicObject> newRefinements) {
+        Map<DynamicObject, DynamicObject> scopeRefinements = declarationContext.getRefinements();
+        if (scopeRefinements.containsKey(refinedClass)) {
             // TODO BJF Review the recursive checking
+            newRefinements.put(refinedClass, scopeRefinements.get(refinedClass));
             return; // Already using this refinement
         }
         Layouts.MODULE.getFields(refinementModule).setOverlaid(true);
         final DynamicObject includedRefinement = Layouts.MODULE.getFields(refinedClass).includeModule(getContext(), refinementModule);
-        scopeRefinements.put(refinedClass, includedRefinement);
+        newRefinements.put(refinedClass, includedRefinement);
     }
 
 }

@@ -32,6 +32,7 @@ public class InternalMethod implements ObjectGraphNode {
     private final SharedMethodInfo sharedMethodInfo;
     /** Contains the "dynamic" lexical scope in case this method is under a class << expr; HERE; end */
     private final LexicalScope lexicalScope;
+    private final DeclarationContext declarationContext;
     private final String name;
 
     private final DynamicObject declaringModule;
@@ -50,6 +51,7 @@ public class InternalMethod implements ObjectGraphNode {
     public static InternalMethod fromProc(
             RubyContext context,
             SharedMethodInfo sharedMethodInfo,
+            DeclarationContext declarationContext,
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
@@ -59,6 +61,7 @@ public class InternalMethod implements ObjectGraphNode {
                 context,
                 sharedMethodInfo,
                 Layouts.PROC.getMethod(proc).getLexicalScope(),
+                declarationContext,
                 name,
                 declaringModule,
                 visibility,
@@ -74,18 +77,20 @@ public class InternalMethod implements ObjectGraphNode {
             RubyContext context,
             SharedMethodInfo sharedMethodInfo,
             LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
             boolean refined,
             CallTarget callTarget) {
-        this(context, sharedMethodInfo, lexicalScope, name, declaringModule, visibility, false, refined, null, callTarget, null, null);
+        this(context, sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, false, refined, null, callTarget, null, null);
     }
 
     public InternalMethod(
             RubyContext context,
             SharedMethodInfo sharedMethodInfo,
             LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
@@ -95,13 +100,14 @@ public class InternalMethod implements ObjectGraphNode {
             CallTarget callTarget,
             DynamicObject capturedBlock,
             DynamicObject capturedDefaultDefinee) {
-        this(sharedMethodInfo, lexicalScope, name, declaringModule, visibility, undefined, false,
+        this(sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, undefined, false,
                 !context.getCoreLibrary().isLoaded(), refined, proc, callTarget, capturedBlock, capturedDefaultDefinee, null);
     }
 
     private InternalMethod(
             SharedMethodInfo sharedMethodInfo,
             LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
@@ -130,6 +136,7 @@ public class InternalMethod implements ObjectGraphNode {
         this.capturedBlock = capturedBlock;
         this.capturedDefaultDefinee = capturedDefaultDefinee;
         this.originalMethod = originalMethod;
+        this.declarationContext = declarationContext;
     }
 
     public SharedMethodInfo getSharedMethodInfo() {
@@ -181,6 +188,7 @@ public class InternalMethod implements ObjectGraphNode {
             return new InternalMethod(
                     sharedMethodInfo,
                     lexicalScope,
+                    declarationContext,
                     name,
                     newDeclaringModule,
                     visibility,
@@ -203,6 +211,7 @@ public class InternalMethod implements ObjectGraphNode {
             return new InternalMethod(
                     sharedMethodInfo,
                     lexicalScope,
+                    declarationContext,
                     newName,
                     declaringModule,
                     visibility,
@@ -225,6 +234,7 @@ public class InternalMethod implements ObjectGraphNode {
             return new InternalMethod(
                     sharedMethodInfo,
                     lexicalScope,
+                    declarationContext,
                     name,
                     declaringModule,
                     visibility,
@@ -247,6 +257,7 @@ public class InternalMethod implements ObjectGraphNode {
             return new InternalMethod(
                 sharedMethodInfo,
                 lexicalScope,
+                declarationContext,
                 name,
                 declaringModule,
                 visibility,
@@ -269,6 +280,7 @@ public class InternalMethod implements ObjectGraphNode {
             return new InternalMethod(
                     sharedMethodInfo,
                     lexicalScope,
+                    declarationContext,
                     name,
                     declaringModule,
                     newVisibility,
@@ -288,6 +300,7 @@ public class InternalMethod implements ObjectGraphNode {
         return new InternalMethod(
                 sharedMethodInfo,
                 lexicalScope,
+                declarationContext,
                 name,
                 declaringModule,
                 visibility,
@@ -306,6 +319,7 @@ public class InternalMethod implements ObjectGraphNode {
         return new InternalMethod(
                 sharedMethodInfo,
                 lexicalScope,
+                declarationContext,
                 name,
                 declaringModule,
                 visibility,
@@ -382,4 +396,7 @@ public class InternalMethod implements ObjectGraphNode {
         return lexicalScope;
     }
 
+    public DeclarationContext getDeclarationContext() {
+        return declarationContext;
+    }
 }

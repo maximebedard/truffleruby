@@ -22,6 +22,7 @@ import org.truffleruby.language.RubyConstant;
 import org.truffleruby.language.RubyGuards;
 import org.truffleruby.language.Visibility;
 import org.truffleruby.language.control.RaiseException;
+import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 import org.truffleruby.language.objects.shared.SharedObjects;
 import org.truffleruby.parser.Identifiers;
@@ -294,7 +295,7 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static MethodLookupResult lookupMethodCachedWithRefinements(DynamicObject module, String name, LexicalScope lexicalScope) {
+    public static MethodLookupResult lookupMethodCachedWithRefinements(DynamicObject module, String name, DeclarationContext declarationContext) {
         final ArrayList<Assumption> assumptions = new ArrayList<>();
 
         // Look in ancestors
@@ -304,12 +305,12 @@ public abstract class ModuleOperations {
             InternalMethod method = fields.getMethod(name);
             if (method != null) {
                 if (method.isRefined()) {
-                    if (lexicalScope != null) {
-                        Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
+                    if (declarationContext != null) {
+                        final Map<DynamicObject, DynamicObject> allRefinements = declarationContext.getRefinements();
                         if (!allRefinements.isEmpty() &&
                             allRefinements.containsKey(module)) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodCachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                            return lookupMethodCachedWithRefinements(allRefinements.get(module), name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {
@@ -327,19 +328,19 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static InternalMethod lookupMethodUncachedWithRefinements(DynamicObject module, String name, LexicalScope lexicalScope) {
+    public static InternalMethod lookupMethodUncachedWithRefinements(DynamicObject module, String name, DeclarationContext declarationContext) {
         // Look in ancestors
         for (DynamicObject ancestor : Layouts.MODULE.getFields(module).ancestors()) {
             final ModuleFields fields = Layouts.MODULE.getFields(ancestor);
             final InternalMethod method = fields.getMethod(name);
             if (method != null) {
                 if (method.isRefined()) {
-                    if (lexicalScope != null) {
-                        Map<DynamicObject, DynamicObject> allRefinements = lexicalScope.getRefinementsAllScopes();
+                    if (declarationContext != null) {
+                        final Map<DynamicObject, DynamicObject> allRefinements = declarationContext.getRefinements();
                         if (!allRefinements.isEmpty() &&
                             allRefinements.containsKey(module)) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodUncachedWithRefinements(lexicalScope.getRefinementsAllScopes().get(module), name, null);
+                            return lookupMethodUncachedWithRefinements(allRefinements.get(module), name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {

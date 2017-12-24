@@ -11,8 +11,8 @@ package org.truffleruby.language.dispatch;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
-import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyBaseNode;
+import org.truffleruby.language.methods.DeclarationContext;
 
 public abstract class DispatchHeadNode extends RubyBaseNode {
 
@@ -39,14 +39,14 @@ public abstract class DispatchHeadNode extends RubyBaseNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            LexicalScope lexicalScope,
+            DeclarationContext declarationContext,
             Object[] argumentsObjects) {
         return first.executeDispatch(
                 frame,
                 receiverObject,
                 methodName,
                 blockObject,
-                lexicalScope,
+                declarationContext,
                 argumentsObjects);
     }
 
