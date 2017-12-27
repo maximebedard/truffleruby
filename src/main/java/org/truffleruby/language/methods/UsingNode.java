@@ -27,21 +27,23 @@ public abstract class UsingNode extends RubyNode {
 
     @Specialization(guards = "isRubyModule(module)")
     public DynamicObject using(DynamicObject module) {
-        final Frame callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameInstance.FrameAccess.READ_WRITE);
         if (RubyGuards.isRubyClass(module)) {
             throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(module, "Module", this));
         }
+
+        final Frame callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameInstance.FrameAccess.READ_WRITE);
         final DeclarationContext declarationContext = RubyArguments.getDeclarationContext(callerFrame);
-        Map<DynamicObject, DynamicObject> newRefinements = usingModuleRecursive(declarationContext, module);
+        final Map<DynamicObject, DynamicObject> newRefinements = usingModuleRecursive(declarationContext, module);
         DeclarationContext.setRefinements(callerFrame, declarationContext, newRefinements);
+
         return nil();
     }
 
     @TruffleBoundary
     private Map<DynamicObject, DynamicObject> usingModuleRecursive(DeclarationContext declarationContext, DynamicObject module) {
         // TODO BJF Review/add activating refinements recursively in module parents
-        ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(module).getRefinements();
-        Map<DynamicObject, DynamicObject> newRefinements = new HashMap<>();
+        final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(module).getRefinements();
+        final Map<DynamicObject, DynamicObject> newRefinements = new HashMap<>();
         if (refinements.isEmpty()) {
             return newRefinements;
         }
@@ -53,10 +55,10 @@ public abstract class UsingNode extends RubyNode {
 
     private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, DeclarationContext declarationContext,
                                  Map<DynamicObject, DynamicObject> newRefinements) {
-        Map<DynamicObject, DynamicObject> scopeRefinements = declarationContext.getRefinements();
-        if (scopeRefinements.containsKey(refinedClass)) {
+        final DynamicObject refinement = declarationContext.getRefinement(refinedClass);
+        if (refinement != null) {
             // TODO BJF Review the recursive checking
-            newRefinements.put(refinedClass, scopeRefinements.get(refinedClass));
+            newRefinements.put(refinedClass, refinement);
             return; // Already using this refinement
         }
         Layouts.MODULE.getFields(refinementModule).setOverlaid(true);

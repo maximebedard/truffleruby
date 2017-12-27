@@ -19,7 +19,7 @@ import org.truffleruby.language.Visibility;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.objects.SingletonClassNode;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -42,19 +42,18 @@ public class DeclarationContext {
         SELF
     }
 
-    private final Map<DynamicObject, DynamicObject> refinements;
-
     public final Visibility visibility;
     public final DefaultDefinee defaultDefinee;
+    private final Map<DynamicObject, DynamicObject> refinements; // immutable
 
-    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject> refinements) {
+    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee) {
+        this(visibility, defaultDefinee, Collections.emptyMap());
+    }
+
+    private DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject> refinements) {
         this.visibility = visibility;
         this.defaultDefinee = defaultDefinee;
         this.refinements = refinements;
-    }
-
-    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee) {
-        this(visibility, defaultDefinee, new HashMap<>());
     }
 
     @TruffleBoundary
@@ -96,11 +95,6 @@ public class DeclarationContext {
         RubyArguments.setDeclarationContext(callerFrame, declarationContext.withRefinements(refinements));
     }
 
-    private DeclarationContext withRefinements(Map<DynamicObject, DynamicObject> refinements) {
-        assert refinements != null;
-        return new DeclarationContext(visibility, defaultDefinee, refinements);
-    }
-
     private DeclarationContext withVisibility(Visibility visibility) {
         assert visibility != null;
         return new DeclarationContext(visibility, defaultDefinee, refinements);
@@ -111,11 +105,20 @@ public class DeclarationContext {
         return new DeclarationContext(visibility, newDefaultDefinee, refinements);
     }
 
+    public DeclarationContext withRefinements(Map<DynamicObject, DynamicObject> refinements) {
+        assert refinements != null;
+        return new DeclarationContext(visibility, defaultDefinee, refinements);
+    }
+
     public Map<DynamicObject, DynamicObject> getRefinements() {
         return refinements;
     }
 
-    public DeclarationContext newCloneLexicalScope() {
+    public DynamicObject getRefinement(DynamicObject module) {
+        return refinements.get(module);
+    }
+
+    public DeclarationContext newModuleDeclarationContext() {
         return new DeclarationContext(Visibility.PUBLIC, DefaultDefinee.LEXICAL_SCOPE, refinements);
     }
 

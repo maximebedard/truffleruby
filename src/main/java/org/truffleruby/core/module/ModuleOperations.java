@@ -306,11 +306,10 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final Map<DynamicObject, DynamicObject> allRefinements = declarationContext.getRefinements();
-                        if (!allRefinements.isEmpty() &&
-                            allRefinements.containsKey(module)) {
+                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodCachedWithRefinements(allRefinements.get(module), name, null);
+                            return lookupMethodCachedWithRefinements(refinement, name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {
@@ -336,11 +335,10 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final Map<DynamicObject, DynamicObject> allRefinements = declarationContext.getRefinements();
-                        if (!allRefinements.isEmpty() &&
-                            allRefinements.containsKey(module)) {
+                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodUncachedWithRefinements(allRefinements.get(module), name, null);
+                            return lookupMethodUncachedWithRefinements(refinement, name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {
