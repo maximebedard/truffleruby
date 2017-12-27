@@ -23,18 +23,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Declaration context for methods:
+ * The set of values captured when a method is defined:
  * <ul>
- * <li>visibility</li>
- * <li>default definee / current module (which module to define on)</li>
+ * <li>the visibility of the method</li>
+ * <li>the current module (default definee) to define the method on</li>
+ * <li>the currently activated refinement modules which apply to the method</li>
  * </ul>
  */
 public class DeclarationContext {
 
     /** @see <a href="http://yugui.jp/articles/846">http://yugui.jp/articles/846</a> */
     private enum DefaultDefinee {
+        /** The closest literal module/class definition is the default definee. */
         LEXICAL_SCOPE,
+        /** #instance_eval, the default definee is self.singleton_class */
         SINGLETON_CLASS,
+        /** #class_eval, the default definee is self */
         SELF
     }
 
