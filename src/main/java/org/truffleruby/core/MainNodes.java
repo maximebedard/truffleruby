@@ -10,9 +10,12 @@
 package org.truffleruby.core;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
+
 import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
@@ -56,8 +59,10 @@ public abstract class MainNodes {
         @Child private UsingNode usingNode = UsingNodeGen.create(null);
 
         @Specialization(guards = "isRubyModule(refinementModule)")
-        public DynamicObject mainUsing(VirtualFrame frame, DynamicObject refinementModule) {
+        public DynamicObject mainUsing(DynamicObject refinementModule,
+                @Cached("create()") BranchProfile errorProfile) {
             if (!isCalledFromTopLevel()) {
+                errorProfile.enter();
                 throw new RaiseException(coreExceptions().runtimeError("main.using is permitted only at toplevel", this));
             }
             usingNode.executeUsing(refinementModule);
