@@ -1304,7 +1304,7 @@ public abstract class KernelNodes {
 
         @Specialization
         public Object send(VirtualFrame frame, Object self, Object name, Object[] args, DynamicObject block) {
-            return dispatchNode.dispatch(frame, self, name, block, null, args);
+            return dispatchNode.dispatch(frame, self, name, block, args);
         }
 
     }

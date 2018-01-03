@@ -41,7 +41,6 @@ public class DoesRespondDispatchHeadNode extends DispatchHeadNode {
                 receiverObject,
                 methodName,
                 null,
-                null, // TODO BJF Review if refinements apply
                 null);
     }
 

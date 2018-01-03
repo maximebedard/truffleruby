@@ -19,7 +19,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.RubyContext;
 import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.core.string.StringUtils;
-import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 
 /**
@@ -67,7 +66,6 @@ public class CachedSingletonDispatchNode extends CachedDispatchNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            DeclarationContext declarationContext,
             Object[] argumentsObjects) {
         try {
             checkAssumptions(assumptions);
@@ -77,7 +75,6 @@ public class CachedSingletonDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
-                    declarationContext,
                     argumentsObjects,
                     "class modified");
         }
@@ -88,7 +85,6 @@ public class CachedSingletonDispatchNode extends CachedDispatchNode {
                     receiverObject,
                     methodName,
                     blockObject,
-                    declarationContext,
                     argumentsObjects);
         }
 

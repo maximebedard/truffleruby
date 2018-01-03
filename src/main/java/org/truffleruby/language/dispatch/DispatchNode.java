@@ -15,7 +15,6 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.core.module.MethodLookupResult;
 import org.truffleruby.language.RubyNode;
-import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.LookupMethodNode;
 
 public abstract class DispatchNode extends RubyNode {
@@ -43,7 +42,6 @@ public abstract class DispatchNode extends RubyNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            DeclarationContext declarationContext,
             Object[] argumentsObjects);
 
     protected MethodLookupResult lookup(
@@ -51,10 +49,9 @@ public abstract class DispatchNode extends RubyNode {
         Object receiver,
         String name,
         boolean ignoreVisibility,
-        boolean onlyCallPublic,
-        DeclarationContext declarationContext) {
+        boolean onlyCallPublic) {
         final MethodLookupResult method = LookupMethodNode.lookupMethodCachedWithVisibility(getContext(),
-                frame, receiver, name, ignoreVisibility, onlyCallPublic, declarationContext);
+                frame, receiver, name, ignoreVisibility, onlyCallPublic);
         if (dispatchAction == DispatchAction.RESPOND_TO_METHOD && method.isDefined() && method.getMethod().isUnimplemented()) {
             return method.withNoMethod();
         }
@@ -66,7 +63,6 @@ public abstract class DispatchNode extends RubyNode {
             Object receiverObject,
             Object methodName,
             DynamicObject blockObject,
-            DeclarationContext declarationContext,
             Object[] argumentsObjects,
             String reason) {
         final DispatchHeadNode head = getHeadNode();
@@ -76,7 +72,6 @@ public abstract class DispatchNode extends RubyNode {
                 receiverObject,
                 methodName,
                 blockObject,
-                declarationContext, // TODO BJF Review
                 argumentsObjects);
     }
 

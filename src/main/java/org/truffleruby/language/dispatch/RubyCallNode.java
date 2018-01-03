@@ -112,13 +112,15 @@ public class RubyCallNode extends RubyNode {
         }
 
         final DeclarationContext declarationContext;
-        if (declarationContextNode != null) {
-            declarationContext = (DeclarationContext) declarationContextNode.execute(frame);
-        } else {
-            declarationContext = RubyArguments.getDeclarationContext(frame);
-        }
+
+        // TODO BJF DeclarationContext Review
+//        if (declarationContextNode != null) {
+//            declarationContext = (DeclarationContext) declarationContextNode.execute(frame);
+//        } else {
+//            declarationContext = RubyArguments.getDeclarationContext(frame);
+//        }
         
-        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, declarationContext, argumentsObjects);
+        final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
         if (isAttrAssign) {
             return argumentsObjects[argumentsObjects.length - 1];
         } else {

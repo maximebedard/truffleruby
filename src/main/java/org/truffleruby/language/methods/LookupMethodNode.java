@@ -158,17 +158,17 @@ public abstract class LookupMethodNode extends RubyNode {
     }
 
     protected MethodLookupResult doCachedLookup(VirtualFrame frame, Object self, String name) {
-        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic, null); // TODO BJF Fix cached lookup
+        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic); // TODO BJF Fix cached lookup
     }
 
     public static MethodLookupResult lookupMethodCachedWithVisibility(RubyContext context, VirtualFrame callingFrame,
-                                                                Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic, DeclarationContext declarationContext) {
+                                                                Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
         CompilerAsserts.neverPartOfCompilation("slow-path method lookup should not be compiled");
 
         if (RubyGuards.isForeignObject(receiver)) {
             throw new UnsupportedOperationException("method lookup not supported on foreign objects");
         }
-
+        final DeclarationContext declarationContext = RubyArguments.tryGetDeclarationContext(callingFrame);
         final MethodLookupResult method = ModuleOperations.lookupMethodCachedWithRefinements(context.getCoreLibrary().getMetaClass(receiver), name, declarationContext);
 
         if (!method.isDefined()) {
