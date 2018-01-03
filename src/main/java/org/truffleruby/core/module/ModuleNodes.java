@@ -1758,6 +1758,7 @@ public abstract class ModuleNodes {
         public DynamicObject toS(VirtualFrame frame, DynamicObject module) {
 
             final String moduleName;
+            final ModuleFields fields = Layouts.MODULE.getFields(module);
             if (RubyGuards.isSingletonClass(module)) {
                 final DynamicObject attached = Layouts.CLASS.getAttached(module);
                 final String name;
@@ -1770,11 +1771,15 @@ public abstract class ModuleNodes {
                         "Truffle::Type.rb_inspect(val)", "val", attached);
                     name = StringOperations.getString(inspectResult);
                 } else {
-                    name = Layouts.MODULE.getFields(module).getName();
+                    name = fields.getName();
                 }
                 moduleName = "#<Class:" + name + ">";
+            } else if (fields.isRefinement()) {
+                final String refinedClass = Layouts.MODULE.getFields(fields.getRefinedClass()).getName();
+                final String lexicalParentName = Layouts.MODULE.getFields(fields.getDefinedAt()).getName();
+                moduleName = "#<refinement:" + refinedClass + "@" + lexicalParentName + ">";
             } else {
-                moduleName = Layouts.MODULE.getFields(module).getName();
+                moduleName = fields.getName();
             }
 
             // TODO BJF Aug 31, 2016 Add refinements to_s
