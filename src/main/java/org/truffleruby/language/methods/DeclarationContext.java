@@ -118,10 +118,6 @@ public class DeclarationContext {
         return refinements.get(module);
     }
 
-    public DeclarationContext newModuleDeclarationContext() {
-        return new DeclarationContext(Visibility.PUBLIC, DefaultDefinee.LEXICAL_SCOPE, refinements);
-    }
-
     @TruffleBoundary
     public DynamicObject getModuleToDefineMethods(Object self, InternalMethod method, RubyContext context, SingletonClassNode singletonClassNode) {
         switch (defaultDefinee) {
