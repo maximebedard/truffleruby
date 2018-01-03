@@ -1886,29 +1886,32 @@ public abstract class ModuleNodes {
 
 
         @Specialization
-        public DynamicObject refine(VirtualFrame frame, DynamicObject self, DynamicObject classToRefine, NotProvided block) {
+        public DynamicObject refine(DynamicObject self, DynamicObject classToRefine, NotProvided block) {
             throw new RaiseException(coreExceptions().argumentError("no block given", this));
         }
 
         @Specialization
-        public DynamicObject refine(VirtualFrame frame, DynamicObject self, DynamicObject classToRefine, DynamicObject block) {
+        public DynamicObject refine(DynamicObject self, DynamicObject classToRefine, DynamicObject block) {
             // TODO BJF add block is not a proc error
 
             if (!RubyGuards.isRubyClass(classToRefine)) {
                 throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(classToRefine, "Class", this));
             }
 
-            ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
+            final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
 
-            DynamicObject refinement = refinements.get(classToRefine);
-            if (refinement == null) {
-                refinement = (DynamicObject) newModuleNode.call(frame, getContext().getCoreLibrary().getModuleClass(), "new");
+            final DynamicObject existingRefinement = refinements.get(classToRefine);
+            final DynamicObject refinement;
+            if (existingRefinement == null) {
+                refinement = (DynamicObject) newModuleNode.call(null, getContext().getCoreLibrary().getModuleClass(), "new");
                 final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
 //                Layouts.MODULE.setSuperclass(refinement, klass); // We don't set superclasses on modules
                 refinementFields.setRefinement(true);
                 refinementFields.setRefinedClass(classToRefine);
                 refinementFields.setDefinedAt(self);
                 refinements.put(classToRefine, refinement);
+            } else {
+                refinement = existingRefinement;
             }
 
             // TODO BJF add the refinements to the yield scope
