@@ -295,7 +295,7 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static MethodLookupResult lookupMethodCachedWithRefinements(DynamicObject module, String name, DeclarationContext declarationContext) {
+    public static MethodLookupResult lookupMethodCached(DynamicObject module, String name, DeclarationContext declarationContext) {
         final ArrayList<Assumption> assumptions = new ArrayList<>();
 
         // Look in ancestors
@@ -309,7 +309,7 @@ public abstract class ModuleOperations {
                         final DynamicObject refinement = declarationContext.getRefinement(module);
                         if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodCachedWithRefinements(refinement, name, null);
+                            return lookupMethodCached(refinement, name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {
@@ -327,7 +327,7 @@ public abstract class ModuleOperations {
     }
 
     @TruffleBoundary
-    public static InternalMethod lookupMethodUncachedWithRefinements(DynamicObject module, String name, DeclarationContext declarationContext) {
+    public static InternalMethod lookupMethodUncached(DynamicObject module, String name, DeclarationContext declarationContext) {
         // Look in ancestors
         for (DynamicObject ancestor : Layouts.MODULE.getFields(module).ancestors()) {
             final ModuleFields fields = Layouts.MODULE.getFields(ancestor);
@@ -338,7 +338,7 @@ public abstract class ModuleOperations {
                         final DynamicObject refinement = declarationContext.getRefinement(module);
                         if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
-                            return lookupMethodUncachedWithRefinements(refinement, name, null);
+                            return lookupMethodUncached(refinement, name, null);
                         }
                     }
                     if (method.getOriginalMethod() != null) {
@@ -356,7 +356,7 @@ public abstract class ModuleOperations {
     }
 
     public static InternalMethod lookupMethod(DynamicObject module, String name, Visibility visibility) {
-        final InternalMethod method = lookupMethodUncachedWithRefinements(module, name, null);
+        final InternalMethod method = lookupMethodUncached(module, name, null);
         if (method == null || method.isUndefined()) {
             return null;
         }

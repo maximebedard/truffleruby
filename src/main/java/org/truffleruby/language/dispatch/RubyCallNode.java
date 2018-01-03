@@ -245,7 +245,7 @@ public class RubyCallNode extends RubyNode {
             // TODO CS-10-Apr-17 I'd like to use this but it doesn't give the same result
             // lookupMethodNode.executeLookupMethod(frame, coreLibrary().getMetaClass(receiverObject), methodName);
 
-            return ModuleOperations.lookupMethodUncachedWithRefinements(coreLibrary().getMetaClass(receiverObject), methodName, null);
+            return ModuleOperations.lookupMethodUncached(coreLibrary().getMetaClass(receiverObject), methodName, null);
         }
 
         // TODO CS-10-Apr-17 remove this boundary

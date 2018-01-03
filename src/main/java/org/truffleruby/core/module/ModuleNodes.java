@@ -1268,7 +1268,7 @@ public abstract class ModuleNodes {
         public boolean isMethodDefined(DynamicObject module, String name, boolean inherit) {
             final InternalMethod method;
             if (inherit) {
-                method = ModuleOperations.lookupMethodUncachedWithRefinements(module, name, null);
+                method = ModuleOperations.lookupMethodUncached(module, name, null);
             } else {
                 method = Layouts.MODULE.getFields(module).getMethod(name);
             }
@@ -1438,7 +1438,7 @@ public abstract class ModuleNodes {
         public DynamicObject publicInstanceMethod(DynamicObject module, String name,
                 @Cached("create()") BranchProfile errorProfile) {
             // TODO(CS, 11-Jan-15) cache this lookup
-            final InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(module, name, null);
+            final InternalMethod method = ModuleOperations.lookupMethodUncached(module, name, null);
 
             if (method == null || method.isUndefined()) {
                 errorProfile.enter();
@@ -1594,7 +1594,7 @@ public abstract class ModuleNodes {
         public DynamicObject instanceMethod(DynamicObject module, String name,
                 @Cached("create()") BranchProfile errorProfile) {
             // TODO(CS, 11-Jan-15) cache this lookup
-            final InternalMethod method = ModuleOperations.lookupMethodUncachedWithRefinements(module, name, null);
+            final InternalMethod method = ModuleOperations.lookupMethodUncached(module, name, null);
 
             if (method == null || method.isUndefined()) {
                 errorProfile.enter();

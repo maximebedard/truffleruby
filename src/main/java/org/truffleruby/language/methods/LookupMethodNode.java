@@ -34,7 +34,7 @@ import org.truffleruby.language.objects.MetaClassNode;
 import org.truffleruby.language.objects.MetaClassNodeGen;
 
 /**
- * Caches {@link ModuleOperations#lookupMethodCachedWithRefinements(DynamicObject, String, DeclarationContext)}
+ * Caches {@link ModuleOperations#lookupMethodCached(DynamicObject, String, DeclarationContext)}
  * on an actual instance.
  */
 @NodeChildren({ @NodeChild("self"), @NodeChild("name") })
@@ -107,7 +107,7 @@ public abstract class LookupMethodNode extends RubyNode {
                 onMetaClassProfile.profile((topMethod = fields.getMethod(name)) != null)) {
             method = topMethod;
         } else {
-            method = ModuleOperations.lookupMethodUncachedWithRefinements(metaClass, name, null);
+            method = ModuleOperations.lookupMethodUncached(metaClass, name, null);
         }
 
         if (notFoundProfile.profile(method == null || method.isUndefined())) {
@@ -169,7 +169,7 @@ public abstract class LookupMethodNode extends RubyNode {
             throw new UnsupportedOperationException("method lookup not supported on foreign objects");
         }
         final DeclarationContext declarationContext = RubyArguments.tryGetDeclarationContext(callingFrame);
-        final MethodLookupResult method = ModuleOperations.lookupMethodCachedWithRefinements(context.getCoreLibrary().getMetaClass(receiver), name, declarationContext);
+        final MethodLookupResult method = ModuleOperations.lookupMethodCached(context.getCoreLibrary().getMetaClass(receiver), name, declarationContext);
 
         if (!method.isDefined()) {
             return method.withNoMethod();
