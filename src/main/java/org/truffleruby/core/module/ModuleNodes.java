@@ -1909,28 +1909,12 @@ public abstract class ModuleNodes {
                 refinementFields.setRefinedClass(classToRefine);
                 refinementFields.setDefinedAt(self);
                 refinements.put(classToRefine, refinement);
-
-                // TODO BJF Enable these once they can be yielded below
-//                addActivatedRefinement(activatedRefinements, classToRefine, refinement);
             }
 
-            // TODO BJF add the activated refinements to the yield scope
+            // TODO BJF add the refinements to the yield scope
             yield.dispatchWithModifiedSelf(block, refinement);
             return refinement;
         }
-
-//        private void addActivatedRefinement(ConcurrentMap<DynamicObject, DynamicObject> activatedRefinements, DynamicObject classToRefine, DynamicObject refinement) {
-//            DynamicObject refinementClass = activatedRefinements.get(classToRefine);
-//            if(refinementClass == null){
-//                // TODO BJF return if already refined
-//            }
-//
-//            final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
-//            refinementFields.setOverlaid(true);
-//
-//            final DynamicObject includedRefinement = Layouts.MODULE.getFields(classToRefine).includeModule(getContext(), refinement);
-//            activatedRefinements.put(classToRefine, includedRefinement);
-//        }
 
     }
 
