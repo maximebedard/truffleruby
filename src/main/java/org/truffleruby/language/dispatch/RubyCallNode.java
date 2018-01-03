@@ -27,7 +27,6 @@ import org.truffleruby.core.module.ModuleOperations;
 import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.methods.BlockDefinitionNode;
-import org.truffleruby.language.methods.DeclarationContext;
 import org.truffleruby.language.methods.InternalMethod;
 
 public class RubyCallNode extends RubyNode {
@@ -111,15 +110,6 @@ public class RubyCallNode extends RubyNode {
             }
         }
 
-        final DeclarationContext declarationContext;
-
-        // TODO BJF DeclarationContext Review
-//        if (declarationContextNode != null) {
-//            declarationContext = (DeclarationContext) declarationContextNode.execute(frame);
-//        } else {
-//            declarationContext = RubyArguments.getDeclarationContext(frame);
-//        }
-        
         final Object returnValue = dispatchHead.dispatch(frame, receiverObject, methodName, blockObject, argumentsObjects);
         if (isAttrAssign) {
             return argumentsObjects[argumentsObjects.length - 1];
