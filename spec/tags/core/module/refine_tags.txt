@@ -7,3 +7,5 @@ fails:Module#refine when super is called in a refinement looks in the refined cl
 fails:Module#refine when super is called in a refinement looks in the refined class even if there is another active refinement
 fails:Module#refine module inclusion overrides methods of ancestors by methods in descendants
 fails:Module#refine applies refinements to calls in the refine block
+fails:Module#refine for methods accessed indirectly is not honored by Kernel#method
+fails:Module#refine for methods accessed indirectly is not honored by Kernel#respond_to?
