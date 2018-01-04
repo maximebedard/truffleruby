@@ -76,7 +76,7 @@ public abstract class AddMethodNode extends RubyBaseNode {
     protected void addMethodInternal(DynamicObject receiver, InternalMethod method, Visibility visibility) {
         if (addMethodNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            addMethodNode = insert(AddMethodNodeGen.create(true, false, null, null, null));
+            addMethodNode = insert(AddMethodNode.create(true));
         }
         addMethodNode.executeAddMethod(receiver, method, visibility);
     }
