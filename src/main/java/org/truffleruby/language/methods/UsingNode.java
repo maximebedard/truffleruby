@@ -49,14 +49,24 @@ public abstract class UsingNode extends RubyNode {
     private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, DeclarationContext declarationContext,
                                  Map<DynamicObject, DynamicObject> newRefinements) {
         final DynamicObject refinement = declarationContext.getRefinement(refinedClass);
-        if (refinement != null) {
-            // TODO BJF Review the recursive checking
-            newRefinements.put(refinedClass, refinement);
-            return; // Already using this refinement
+        if (refinement == null) {
+            newRefinements.put(refinedClass, refinementModule);
+        } else {
+            if (refinement == refinementModule) {
+                // Already using this refinement
+            } else {
+                throw new UnsupportedOperationException("refinement conflict for " + Layouts.MODULE.getFields(refinedClass).getName());
+            }
         }
-        Layouts.MODULE.getFields(refinementModule).setOverlaid(true);
-        final DynamicObject includedRefinement = Layouts.MODULE.getFields(refinedClass).includeModule(getContext(), refinementModule);
-        newRefinements.put(refinedClass, includedRefinement);
+
+//        if (refinement != null) {
+//            // TODO BJF Review the recursive checking
+//            newRefinements.put(refinedClass, refinement);
+//            return; // Already using this refinement
+//        }
+//         Layouts.MODULE.getFields(refinementModule).setOverlaid(true);
+//         final DynamicObject includedRefinement = Layouts.MODULE.getFields(refinedClass).includeModule(getContext(), refinementModule);
+//         newRefinements.put(refinedClass, includedRefinement);
     }
 
 }

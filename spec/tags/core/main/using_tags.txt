@@ -1,2 +1,0 @@
-fails:main.using uses refinements from the given module only in the target file
-fails:main.using uses refinements from the given module for method calls in the target file
