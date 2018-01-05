@@ -111,6 +111,7 @@ import org.truffleruby.parser.Translator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1945,8 +1946,11 @@ public abstract class ModuleNodes {
                 refinement = existingRefinement;
             }
 
-            // TODO BJF add the refinements to the yield scope
-            final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement));
+            // Apply the refinements inside the refine block
+            final Map<DynamicObject, DynamicObject> refinementsInDeclarationContext = new HashMap<>();
+            refinementsInDeclarationContext.put(classToRefine, refinement);
+            final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
+
             callBlockNode.executeCallBlock(declarationContext, block, refinement, Layouts.PROC.getBlock(block), EMPTY_ARGUMENTS);
             return refinement;
         }
