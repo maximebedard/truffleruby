@@ -286,6 +286,28 @@ public class InternalMethod implements ObjectGraphNode {
         }
     }
 
+    public InternalMethod withDeclarationContext(DeclarationContext newDeclarationContext) {
+        if (newDeclarationContext == declarationContext) {
+            return this;
+        } else {
+            return new InternalMethod(
+                    sharedMethodInfo,
+                    lexicalScope,
+                    newDeclarationContext,
+                    name,
+                    declaringModule,
+                    visibility,
+                    undefined,
+                    unimplemented,
+                    builtIn,
+                    refined,
+                    proc,
+                    callTarget,
+                    capturedBlock,
+                    originalMethod);
+        }
+    }
+
     public InternalMethod undefined() {
         return new InternalMethod(
                 sharedMethodInfo,

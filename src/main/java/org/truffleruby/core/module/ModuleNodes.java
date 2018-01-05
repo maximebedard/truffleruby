@@ -1966,6 +1966,14 @@ public abstract class ModuleNodes {
             refinementsInDeclarationContext.put(classToRefine, new DynamicObject[]{ refinement });
             final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
 
+            // Update methods in existing refinements in this namespace to also see this new refine block's refinements
+            for (DynamicObject existingRefinement : refinements.values()) {
+                final ModuleFields fields = Layouts.MODULE.getFields(existingRefinement);
+                for (InternalMethod refinedMethodInExistingRefinement : fields.getMethods()) {
+                    fields.addMethod(getContext(), this, refinedMethodInExistingRefinement.withDeclarationContext(declarationContext));
+                }
+            }
+
             callBlockNode.executeCallBlock(declarationContext, block, refinement, Layouts.PROC.getBlock(block), EMPTY_ARGUMENTS);
             return refinement;
         }
