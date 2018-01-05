@@ -42,6 +42,7 @@ import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
 import org.truffleruby.builtins.CoreMethodNode;
+import org.truffleruby.builtins.NonStandard;
 import org.truffleruby.collections.ConcurrentOperations;
 import org.truffleruby.core.RaiseIfFrozenNode;
 import org.truffleruby.core.cast.BooleanCastWithDefaultNodeGen;
@@ -1845,6 +1846,27 @@ public abstract class ModuleNodes {
             }
             final Object[] refinements = refinementNamespaces.toArray(new Object[0]);
             return createArray(refinements, refinements.length);
+        }
+
+    }
+
+    @NonStandard
+    @CoreMethod(names = "used_refinements", onSingleton = true)
+    public abstract static class UsedRefinementsNode extends CoreMethodArrayArgumentsNode {
+
+        @TruffleBoundary
+        @Specialization
+        public DynamicObject usedRefinements() {
+            final Frame frame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameAccess.READ_ONLY);
+            final DeclarationContext declarationContext = RubyArguments.getDeclarationContext(frame);
+            final Set<DynamicObject> refinements = new HashSet<>();
+            for (DynamicObject refinementModules[] : declarationContext.getRefinements().values()) {
+                for (DynamicObject refinementModule : refinementModules) {
+                    refinements.add(refinementModule);
+                }
+            }
+            final Object[] refinementsArray = refinements.toArray(new Object[0]);
+            return createArray(refinementsArray, refinementsArray.length);
         }
 
     }
