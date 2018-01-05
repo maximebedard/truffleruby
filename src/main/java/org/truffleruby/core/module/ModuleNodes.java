@@ -1948,18 +1948,21 @@ public abstract class ModuleNodes {
         }
 
         @Specialization
-        public DynamicObject refine(DynamicObject self, DynamicObject classToRefine, DynamicObject block) {
+        public DynamicObject refine(DynamicObject namespace, DynamicObject classToRefine, DynamicObject block) {
             // TODO BJF add block is not a proc error
 
             if (!RubyGuards.isRubyClass(classToRefine)) {
                 throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(classToRefine, "Class", this));
             }
 
-            final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
-            final DynamicObject refinement = ConcurrentOperations.getOrCompute(refinements, classToRefine, klass -> newRefinementModule(self, classToRefine));
+            final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(namespace).getRefinements();
+            final DynamicObject refinement = ConcurrentOperations.getOrCompute(refinements, classToRefine, klass -> newRefinementModule(namespace, classToRefine));
 
-            // Apply the refinements inside the refine block
+            // Apply the existing refinements in this namespace and the new refinement inside the refine block
             final Map<DynamicObject, DynamicObject[]> refinementsInDeclarationContext = new HashMap<>();
+            for (Entry<DynamicObject, DynamicObject> existingRefinement : refinements.entrySet()) {
+                refinementsInDeclarationContext.put(existingRefinement.getKey(), new DynamicObject[]{ existingRefinement.getValue() });
+            }
             refinementsInDeclarationContext.put(classToRefine, new DynamicObject[]{ refinement });
             final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
 
