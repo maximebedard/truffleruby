@@ -306,10 +306,17 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final DynamicObject refinement = declarationContext.getRefinement(ancestor);
-                        if (refinement != null) {
-                            // TODO BJF Need to pass assumptions here?
-                            return lookupMethodCached(refinement, name, null);
+                        final DynamicObject[] refinements = declarationContext.getRefinementsFor(ancestor);
+                        if (refinements != null) {
+                            for (DynamicObject refinement : refinements) {
+                                final MethodLookupResult refinedMethod = lookupMethodCached(refinement, name, null);
+                                if (refinedMethod.isDefined()) {
+                                    for (Assumption assumption : refinedMethod.getAssumptions()) {
+                                        assumptions.add(assumption);
+                                    }
+                                    return new MethodLookupResult(refinedMethod.getMethod(), toArray(assumptions));
+                                }
+                            }
                         }
                     }
                     if (method.getOriginalMethod() != null) {
@@ -335,10 +342,14 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final DynamicObject refinement = declarationContext.getRefinement(ancestor);
-                        if (refinement != null) {
-                            // TODO BJF Need to pass assumptions here?
-                            return lookupMethodUncached(refinement, name, null);
+                        final DynamicObject[] refinements = declarationContext.getRefinementsFor(ancestor);
+                        if (refinements != null) {
+                            for (DynamicObject refinement : refinements) {
+                                final InternalMethod refinedMethod = lookupMethodUncached(refinement, name, null);
+                                if (refinedMethod != null) {
+                                    return refinedMethod;
+                                }
+                            }
                         }
                     }
                     if (method.getOriginalMethod() != null) {

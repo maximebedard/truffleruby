@@ -71,14 +71,14 @@ public class DeclarationContext {
 
     public final Visibility visibility;
     public final DefaultDefinee defaultDefinee;
-    /** Maps refined classes (C) to refinement modules (M) */
-    private final Map<DynamicObject, DynamicObject> refinements; // immutable
+    /** Maps a refined class (C) to refinement modules (M) */
+    private final Map<DynamicObject, DynamicObject[]> refinements; // immutable
 
     public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee) {
         this(visibility, defaultDefinee, Collections.emptyMap());
     }
 
-    private DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject> refinements) {
+    private DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject[]> refinements) {
         this.visibility = visibility;
         this.defaultDefinee = defaultDefinee;
         this.refinements = refinements;
@@ -119,7 +119,7 @@ public class DeclarationContext {
     }
 
     @TruffleBoundary
-    public static void setRefinements(Frame callerFrame, DeclarationContext declarationContext, Map<DynamicObject, DynamicObject> refinements) {
+    public static void setRefinements(Frame callerFrame, DeclarationContext declarationContext, Map<DynamicObject, DynamicObject[]> refinements) {
         RubyArguments.setDeclarationContext(callerFrame, declarationContext.withRefinements(refinements));
     }
 
@@ -136,16 +136,16 @@ public class DeclarationContext {
         return new DeclarationContext(visibility, newDefaultDefinee, refinements);
     }
 
-    public DeclarationContext withRefinements(Map<DynamicObject, DynamicObject> refinements) {
+    public DeclarationContext withRefinements(Map<DynamicObject, DynamicObject[]> refinements) {
         assert refinements != null;
         return new DeclarationContext(visibility, defaultDefinee, refinements);
     }
 
-    public Map<DynamicObject, DynamicObject> getRefinements() {
+    public Map<DynamicObject, DynamicObject[]> getRefinements() {
         return refinements;
     }
 
-    public DynamicObject getRefinement(DynamicObject module) {
+    public DynamicObject[] getRefinementsFor(DynamicObject module) {
         return refinements.get(module);
     }
 

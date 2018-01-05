@@ -1838,8 +1838,10 @@ public abstract class ModuleNodes {
             final Frame frame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameAccess.READ_ONLY);
             final DeclarationContext declarationContext = RubyArguments.getDeclarationContext(frame);
             final Set<DynamicObject> refinementNamespaces = new HashSet<>();
-            for (DynamicObject refinementModule : declarationContext.getRefinements().values()) {
-                refinementNamespaces.add(Layouts.MODULE.getFields(refinementModule).getDefinedAt());
+            for (DynamicObject refinementModules[] : declarationContext.getRefinements().values()) {
+                for (DynamicObject refinementModule : refinementModules) {
+                    refinementNamespaces.add(Layouts.MODULE.getFields(refinementModule).getDefinedAt());
+                }
             }
             final Object[] refinements = refinementNamespaces.toArray(new Object[0]);
             return createArray(refinements, refinements.length);
@@ -1935,8 +1937,8 @@ public abstract class ModuleNodes {
             final DynamicObject refinement = ConcurrentOperations.getOrCompute(refinements, classToRefine, klass -> newRefinementModule(self, classToRefine));
 
             // Apply the refinements inside the refine block
-            final Map<DynamicObject, DynamicObject> refinementsInDeclarationContext = new HashMap<>();
-            refinementsInDeclarationContext.put(classToRefine, refinement);
+            final Map<DynamicObject, DynamicObject[]> refinementsInDeclarationContext = new HashMap<>();
+            refinementsInDeclarationContext.put(classToRefine, new DynamicObject[]{ refinement });
             final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
 
             callBlockNode.executeCallBlock(declarationContext, block, refinement, Layouts.PROC.getBlock(block), EMPTY_ARGUMENTS);
