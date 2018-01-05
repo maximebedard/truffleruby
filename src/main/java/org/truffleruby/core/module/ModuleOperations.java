@@ -306,7 +306,7 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        final DynamicObject refinement = declarationContext.getRefinement(ancestor);
                         if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
                             return lookupMethodCached(refinement, name, null);
@@ -335,7 +335,7 @@ public abstract class ModuleOperations {
             if (method != null) {
                 if (method.isRefined()) {
                     if (declarationContext != null) {
-                        final DynamicObject refinement = declarationContext.getRefinement(module);
+                        final DynamicObject refinement = declarationContext.getRefinement(ancestor);
                         if (refinement != null) {
                             // TODO BJF Need to pass assumptions here?
                             return lookupMethodUncached(refinement, name, null);
