@@ -51,7 +51,7 @@ public abstract class AddMethodNode extends RubyBaseNode {
         method = method.withVisibility(visibility);
 
         if (Layouts.MODULE.getFields(module).isRefinement()) {
-            DynamicObject refinedClass = Layouts.MODULE.getFields(module).getRefinedClass();
+            final DynamicObject refinedClass = Layouts.MODULE.getFields(module).getRefinedClass();
             addRefinedMethodEntry(refinedClass, method);
         }
 
@@ -64,10 +64,11 @@ public abstract class AddMethodNode extends RubyBaseNode {
         }
     }
 
+    @TruffleBoundary
     private void addRefinedMethodEntry(DynamicObject module, InternalMethod method) {
         final MethodLookupResult result = ModuleOperations.lookupMethodCached(module, method.getName(), null);
         if (result.getMethod() == null) {
-            addMethodInternal(module, method.withRefined(true), Visibility.PUBLIC);
+            addMethodInternal(module, method.withRefined(true), method.getVisibility());
         } else {
             addMethodInternal(module, result.getMethod().withOriginalMethod(result.getMethod()).withRefined(true),  method.getVisibility());
         }
