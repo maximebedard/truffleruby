@@ -42,6 +42,7 @@ import org.truffleruby.builtins.CoreClass;
 import org.truffleruby.builtins.CoreMethod;
 import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
 import org.truffleruby.builtins.CoreMethodNode;
+import org.truffleruby.collections.ConcurrentOperations;
 import org.truffleruby.core.RaiseIfFrozenNode;
 import org.truffleruby.core.cast.BooleanCastWithDefaultNodeGen;
 import org.truffleruby.core.cast.NameToJavaStringNode;
@@ -1931,20 +1932,7 @@ public abstract class ModuleNodes {
             }
 
             final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(self).getRefinements();
-
-            final DynamicObject existingRefinement = refinements.get(classToRefine);
-            final DynamicObject refinement;
-            if (existingRefinement == null) {
-                refinement = (DynamicObject) newModuleNode.call(null, getContext().getCoreLibrary().getModuleClass(), "new");
-                final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
-//                Layouts.MODULE.setSuperclass(refinement, klass); // We don't set superclasses on modules
-                refinementFields.setRefinement(true);
-                refinementFields.setRefinedClass(classToRefine);
-                refinementFields.setDefinedAt(self);
-                refinements.put(classToRefine, refinement);
-            } else {
-                refinement = existingRefinement;
-            }
+            final DynamicObject refinement = ConcurrentOperations.getOrCompute(refinements, classToRefine, klass -> newRefinementModule(self, classToRefine));
 
             // Apply the refinements inside the refine block
             final Map<DynamicObject, DynamicObject> refinementsInDeclarationContext = new HashMap<>();
@@ -1952,6 +1940,17 @@ public abstract class ModuleNodes {
             final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
 
             callBlockNode.executeCallBlock(declarationContext, block, refinement, Layouts.PROC.getBlock(block), EMPTY_ARGUMENTS);
+            return refinement;
+        }
+
+        private DynamicObject newRefinementModule(DynamicObject namespace, DynamicObject classToRefine) {
+            final DynamicObject refinement = (DynamicObject) newModuleNode.call(null, getContext().getCoreLibrary().getModuleClass(), "new");
+            final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
+            // Layouts.MODULE.setSuperclass(refinement, klass); // We don't set superclasses on
+            // modules
+            refinementFields.setRefinement(true);
+            refinementFields.setRefinedClass(classToRefine);
+            refinementFields.setDefinedAt(namespace);
             return refinement;
         }
 
