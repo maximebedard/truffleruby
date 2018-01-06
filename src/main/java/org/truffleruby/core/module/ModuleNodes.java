@@ -1946,6 +1946,7 @@ public abstract class ModuleNodes {
             throw new RaiseException(coreExceptions().argumentError("no block given", this));
         }
 
+        @TruffleBoundary
         @Specialization
         public DynamicObject refine(DynamicObject namespace, DynamicObject classToRefine, DynamicObject block) {
             // TODO BJF add block is not a proc error
