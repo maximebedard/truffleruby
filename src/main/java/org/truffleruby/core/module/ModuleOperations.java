@@ -16,6 +16,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import org.truffleruby.Layouts;
 import org.truffleruby.RubyContext;
+import org.truffleruby.core.array.ArrayUtils;
 import org.truffleruby.core.string.StringUtils;
 import org.truffleruby.language.LexicalScope;
 import org.truffleruby.language.RubyConstant;
@@ -377,25 +378,44 @@ public abstract class ModuleOperations {
     public static MethodLookupResult lookupSuperMethod(InternalMethod currentMethod, DynamicObject objectMetaClass) {
         assert RubyGuards.isRubyModule(objectMetaClass);
         final String name = currentMethod.getSharedMethodInfo().getName(); // use the original name
-        return lookupSuperMethod(currentMethod.getDeclaringModule(), name, objectMetaClass);
+        return lookupSuperMethod(currentMethod.getDeclaringModule(), name, objectMetaClass, currentMethod.getDeclarationContext());
     }
 
     @TruffleBoundary
-    private static MethodLookupResult lookupSuperMethod(DynamicObject declaringModule, String name, DynamicObject objectMetaClass) {
+    private static MethodLookupResult lookupSuperMethod(DynamicObject declaringModule, String name, DynamicObject objectMetaClass, DeclarationContext declarationContext) {
         assert RubyGuards.isRubyModule(declaringModule);
         assert RubyGuards.isRubyModule(objectMetaClass);
+
+        boolean inRefinedMethod = declarationContext != null && Layouts.MODULE.getFields(declaringModule).isRefinement();
 
         final ArrayList<Assumption> assumptions = new ArrayList<>();
         boolean foundDeclaringModule = false;
         for (DynamicObject module : Layouts.MODULE.getFields(objectMetaClass).ancestors()) {
             if (module == declaringModule) {
                 foundDeclaringModule = true;
-            } else if (foundDeclaringModule) {
-                ModuleFields fields = Layouts.MODULE.getFields(module);
+            } else {
+                final ModuleFields fields = Layouts.MODULE.getFields(module);
                 assumptions.add(fields.getMethodsUnmodifiedAssumption());
-                InternalMethod method = fields.getMethod(name);
+                final InternalMethod method = fields.getMethod(name);
                 if (method != null) {
-                    return new MethodLookupResult(method, toArray(assumptions));
+                    if (foundDeclaringModule) {
+                        return new MethodLookupResult(method, toArray(assumptions));
+                    } else if (inRefinedMethod && method.isRefined()) {
+                        final DynamicObject[] refinements = declarationContext.getRefinementsFor(module);
+                        if (refinements != null && ArrayUtils.contains(refinements, declaringModule)) {
+                            final MethodLookupResult superMethodInRefinement = lookupSuperMethod(declaringModule, name, declaringModule, null);
+                            if (superMethodInRefinement.isDefined()) {
+                                for (Assumption assumption : superMethodInRefinement.getAssumptions()) {
+                                    assumptions.add(assumption);
+                                }
+                                return new MethodLookupResult(superMethodInRefinement.getMethod(), toArray(assumptions));
+                            } else if (method.getOriginalMethod() != null) {
+                                return new MethodLookupResult(method.getOriginalMethod(), toArray(assumptions));
+                            } else {
+                                foundDeclaringModule = true;
+                            }
+                        }
+                    }
                 }
             }
         }
