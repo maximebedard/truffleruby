@@ -386,14 +386,14 @@ public abstract class ModuleOperations {
         assert RubyGuards.isRubyModule(declaringModule);
         assert RubyGuards.isRubyModule(objectMetaClass);
 
-        boolean inRefinedMethod = declarationContext != null && Layouts.MODULE.getFields(declaringModule).isRefinement();
+        boolean inRefinedMethod = Layouts.MODULE.getFields(declaringModule).isRefinement();
 
         final ArrayList<Assumption> assumptions = new ArrayList<>();
         boolean foundDeclaringModule = false;
         for (DynamicObject module : Layouts.MODULE.getFields(objectMetaClass).ancestors()) {
             if (module == declaringModule) {
                 foundDeclaringModule = true;
-            } else {
+            } else if (foundDeclaringModule || inRefinedMethod) {
                 final ModuleFields fields = Layouts.MODULE.getFields(module);
                 assumptions.add(fields.getMethodsUnmodifiedAssumption());
                 final InternalMethod method = fields.getMethod(name);
@@ -403,7 +403,7 @@ public abstract class ModuleOperations {
                     } else if (inRefinedMethod && method.isRefined()) {
                         final DynamicObject[] refinements = declarationContext.getRefinementsFor(module);
                         if (refinements != null && ArrayUtils.contains(refinements, declaringModule)) {
-                            final MethodLookupResult superMethodInRefinement = lookupSuperMethod(declaringModule, name, declaringModule, null);
+                            final MethodLookupResult superMethodInRefinement = lookupSuperMethodNoRefinements(declaringModule, name, declaringModule);
                             if (superMethodInRefinement.isDefined()) {
                                 for (Assumption assumption : superMethodInRefinement.getAssumptions()) {
                                     assumptions.add(assumption);
@@ -416,6 +416,29 @@ public abstract class ModuleOperations {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        return new MethodLookupResult(null, toArray(assumptions));
+    }
+
+    @TruffleBoundary
+    private static MethodLookupResult lookupSuperMethodNoRefinements(DynamicObject declaringModule, String name, DynamicObject objectMetaClass) {
+        assert RubyGuards.isRubyModule(declaringModule);
+        assert RubyGuards.isRubyModule(objectMetaClass);
+
+        final ArrayList<Assumption> assumptions = new ArrayList<>();
+        boolean foundDeclaringModule = false;
+        for (DynamicObject module : Layouts.MODULE.getFields(objectMetaClass).ancestors()) {
+            if (module == declaringModule) {
+                foundDeclaringModule = true;
+            } else if (foundDeclaringModule) {
+                final ModuleFields fields = Layouts.MODULE.getFields(module);
+                assumptions.add(fields.getMethodsUnmodifiedAssumption());
+                final InternalMethod method = fields.getMethod(name);
+                if (method != null) {
+                    return new MethodLookupResult(method, toArray(assumptions));
                 }
             }
         }
