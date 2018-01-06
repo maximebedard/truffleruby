@@ -391,16 +391,17 @@ public abstract class ModuleOperations {
         final ArrayList<Assumption> assumptions = new ArrayList<>();
         boolean foundDeclaringModule = false;
         for (DynamicObject module : Layouts.MODULE.getFields(objectMetaClass).ancestors()) {
-            if (module == declaringModule) {
-                foundDeclaringModule = true;
-            } else if (foundDeclaringModule || inRefinedMethod) {
-                final ModuleFields fields = Layouts.MODULE.getFields(module);
-                assumptions.add(fields.getMethodsUnmodifiedAssumption());
-                final InternalMethod method = fields.getMethod(name);
-                if (method != null) {
-                    if (foundDeclaringModule) {
-                        return new MethodLookupResult(method, toArray(assumptions));
-                    } else if (inRefinedMethod && method.isRefined()) {
+            if (!foundDeclaringModule) {
+                if (!inRefinedMethod) {
+                    if (module == declaringModule) {
+                        foundDeclaringModule = true;
+                    }
+                } else {
+                    final ModuleFields fields = Layouts.MODULE.getFields(module);
+                    assumptions.add(fields.getMethodsUnmodifiedAssumption());
+                    final InternalMethod method = fields.getMethod(name);
+
+                    if (method != null && method.isRefined()) {
                         final DynamicObject[] refinements = declarationContext.getRefinementsFor(module);
                         if (refinements != null && ArrayUtils.contains(refinements, declaringModule)) {
                             final MethodLookupResult superMethodInRefinement = lookupSuperMethodNoRefinements(declaringModule, name, declaringModule);
@@ -416,6 +417,13 @@ public abstract class ModuleOperations {
                             }
                         }
                     }
+                }
+            } else {
+                final ModuleFields fields = Layouts.MODULE.getFields(module);
+                assumptions.add(fields.getMethodsUnmodifiedAssumption());
+                final InternalMethod method = fields.getMethod(name);
+                if (method != null) {
+                    return new MethodLookupResult(method, toArray(assumptions));
                 }
             }
         }
