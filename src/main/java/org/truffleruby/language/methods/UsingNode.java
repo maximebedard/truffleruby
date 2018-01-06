@@ -13,6 +13,8 @@ import org.truffleruby.language.RubyNode;
 import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.control.RaiseException;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -38,12 +40,21 @@ public abstract class UsingNode extends RubyNode {
 
     @TruffleBoundary
     private Map<DynamicObject, DynamicObject[]> usingModuleRecursive(DeclarationContext declarationContext, DynamicObject module) {
-        // TODO BJF Review/add activating refinements recursively in module parents
-        final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(module).getRefinements();
         final Map<DynamicObject, DynamicObject[]> newRefinements = new HashMap<>();
-        for (Map.Entry<DynamicObject, DynamicObject> entry : refinements.entrySet()) {
-            usingRefinement(entry.getKey(), entry.getValue(), declarationContext, newRefinements);
+
+        // Iterate ancestors in reverse order so refinements upper in the chain have precedence
+        final Deque<DynamicObject> reverseAncestors = new ArrayDeque<>();
+        for (DynamicObject ancestor : Layouts.MODULE.getFields(module).ancestors()) {
+            reverseAncestors.addFirst(ancestor);
         }
+
+        for (DynamicObject ancestor : reverseAncestors) {
+            final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(ancestor).getRefinements();
+            for (Map.Entry<DynamicObject, DynamicObject> entry : refinements.entrySet()) {
+                usingRefinement(entry.getKey(), entry.getValue(), declarationContext, newRefinements);
+            }
+        }
+
         return newRefinements;
     }
 
