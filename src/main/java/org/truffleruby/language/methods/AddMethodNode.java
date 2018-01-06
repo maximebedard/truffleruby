@@ -32,8 +32,6 @@ public abstract class AddMethodNode extends RubyBaseNode {
 
     @Child private SingletonClassNode singletonClassNode;
     @Child private LookupMethodNode lookupMethodNode;
-    @Child private AddMethodNode addMethodNode;
-
 
     public AddMethodNode(boolean ignoreNameVisibility) {
         this.ignoreNameVisibility = ignoreNameVisibility;
@@ -48,41 +46,35 @@ public abstract class AddMethodNode extends RubyBaseNode {
             visibility = Visibility.PRIVATE;
         }
 
-        method = method.withVisibility(visibility);
-
         if (Layouts.MODULE.getFields(module).isRefinement()) {
             final DynamicObject refinedClass = Layouts.MODULE.getFields(module).getRefinedClass();
-            addRefinedMethodEntry(refinedClass, method);
+            addRefinedMethodEntry(refinedClass, method, visibility);
         }
 
+        doAddMethod(module, method, visibility);
+    }
+
+    @TruffleBoundary
+    private void addRefinedMethodEntry(DynamicObject module, InternalMethod method, Visibility visibility) {
+        final MethodLookupResult result = ModuleOperations.lookupMethodCached(module, method.getName(), null);
+        final InternalMethod originalMethod = result.getMethod();
+        if (originalMethod == null) {
+            doAddMethod(module, method.withRefined(true).withOriginalMethod(null), visibility);
+        } else if (originalMethod.isRefined()) {
+            // Already marked as refined
+        } else {
+            doAddMethod(module, originalMethod.withRefined(true).withOriginalMethod(originalMethod), visibility);
+        }
+    }
+
+    private void doAddMethod(DynamicObject module, InternalMethod method, Visibility visibility) {
         if (visibility == Visibility.MODULE_FUNCTION) {
             addMethodToModule(module, method.withVisibility(Visibility.PRIVATE));
             final DynamicObject singletonClass = getSingletonClass(module);
             addMethodToModule(singletonClass, method.withDeclaringModule(singletonClass).withVisibility(Visibility.PUBLIC));
         } else {
-            addMethodToModule(module, method);
+            addMethodToModule(module, method.withVisibility(visibility));
         }
-    }
-
-    @TruffleBoundary
-    private void addRefinedMethodEntry(DynamicObject module, InternalMethod method) {
-        final MethodLookupResult result = ModuleOperations.lookupMethodCached(module, method.getName(), null);
-        final InternalMethod originalMethod = result.getMethod();
-        if (originalMethod == null) {
-            addMethodInternal(module, method.withRefined(true).withOriginalMethod(null), method.getVisibility());
-        } else if (originalMethod.isRefined()) {
-            // Already marked as refined
-        } else {
-            addMethodInternal(module, originalMethod.withRefined(true).withOriginalMethod(originalMethod), method.getVisibility());
-        }
-    }
-
-    protected void addMethodInternal(DynamicObject receiver, InternalMethod method, Visibility visibility) {
-        if (addMethodNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            addMethodNode = insert(AddMethodNode.create(true));
-        }
-        addMethodNode.executeAddMethod(receiver, method, visibility);
     }
     
     public void addMethodToModule(final DynamicObject module, InternalMethod method) {
