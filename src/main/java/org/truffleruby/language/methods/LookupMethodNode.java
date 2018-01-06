@@ -86,6 +86,7 @@ public abstract class LookupMethodNode extends RubyNode {
             @Cached("create()") BranchProfile foreignProfile,
             @Cached("createBinaryProfile()") ConditionProfile noPrependedModulesProfile,
             @Cached("createBinaryProfile()") ConditionProfile onMetaClassProfile,
+            @Cached("createBinaryProfile()") ConditionProfile isRefinedProfile,
             @Cached("createBinaryProfile()") ConditionProfile notFoundProfile,
             @Cached("createBinaryProfile()") ConditionProfile publicProfile,
             @Cached("createBinaryProfile()") ConditionProfile privateProfile,
@@ -104,7 +105,8 @@ public abstract class LookupMethodNode extends RubyNode {
         final ModuleFields fields = Layouts.MODULE.getFields(metaClass);
         InternalMethod topMethod;
         if (noPrependedModulesProfile.profile(fields.getFirstModuleChain() == fields) &&
-                onMetaClassProfile.profile((topMethod = fields.getMethod(name)) != null)) {
+                onMetaClassProfile.profile((topMethod = fields.getMethod(name)) != null) &&
+                !isRefinedProfile.profile(topMethod.isRefined())) {
             method = topMethod;
         } else {
             method = ModuleOperations.lookupMethodUncached(metaClass, name, null);
