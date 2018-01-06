@@ -1744,8 +1744,7 @@ public abstract class ModuleNodes {
         private void removeMethod(VirtualFrame frame, DynamicObject module, String name) {
             isFrozenNode.raiseIfFrozen(module);
 
-            if (Layouts.MODULE.getFields(module).getMethod(name) != null) {
-                Layouts.MODULE.getFields(module).removeMethod(name);
+            if (Layouts.MODULE.getFields(module).removeMethod(name)) {
                 if (RubyGuards.isSingletonClass(module)) {
                     final DynamicObject receiver = Layouts.CLASS.getAttached(module);
                     methodRemovedNode.call(frame, receiver, "singleton_method_removed", getSymbol(name));

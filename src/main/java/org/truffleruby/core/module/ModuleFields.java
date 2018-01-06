@@ -414,10 +414,25 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     }
 
     @TruffleBoundary
-    public void removeMethod(String methodName) {
-        methods.remove(methodName);
+    public boolean removeMethod(String methodName) {
+        final InternalMethod method = getMethod(methodName);
+        if (method == null) {
+            return false;
+        }
+
+        if (method.isRefined()) {
+            if (method.getOriginalMethod() == null) {
+                return false;
+            } else {
+                methods.put(methodName, method.withOriginalMethod(null));
+            }
+        } else {
+            methods.remove(methodName);
+        }
+
         newMethodsVersion();
         changedMethod(methodName);
+        return true;
     }
 
     @TruffleBoundary
