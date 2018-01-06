@@ -70,6 +70,8 @@ public abstract class AddMethodNode extends RubyBaseNode {
         final InternalMethod originalMethod = result.getMethod();
         if (originalMethod == null) {
             addMethodInternal(module, method.withRefined(true).withOriginalMethod(null), method.getVisibility());
+        } else if (originalMethod.isRefined()) {
+            // Already marked as refined
         } else {
             addMethodInternal(module, originalMethod.withRefined(true).withOriginalMethod(originalMethod), method.getVisibility());
         }

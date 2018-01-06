@@ -118,6 +118,7 @@ public class InternalMethod implements ObjectGraphNode {
             InternalMethod originalMethod) {
         assert RubyGuards.isRubyModule(declaringModule);
         assert lexicalScope != null;
+        assert originalMethod == null || !originalMethod.isRefined();
         this.sharedMethodInfo = sharedMethodInfo;
         this.lexicalScope = lexicalScope;
         this.declarationContext = declarationContext;
