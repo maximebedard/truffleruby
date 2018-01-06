@@ -78,7 +78,7 @@ public class DeclarationContext {
         this(visibility, defaultDefinee, Collections.emptyMap());
     }
 
-    private DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject[]> refinements) {
+    public DeclarationContext(Visibility visibility, DefaultDefinee defaultDefinee, Map<DynamicObject, DynamicObject[]> refinements) {
         this.visibility = visibility;
         this.defaultDefinee = defaultDefinee;
         this.refinements = refinements;

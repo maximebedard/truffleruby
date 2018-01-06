@@ -1963,7 +1963,7 @@ public abstract class ModuleNodes {
                 refinementsInDeclarationContext.put(existingRefinement.getKey(), new DynamicObject[]{ existingRefinement.getValue() });
             }
             refinementsInDeclarationContext.put(classToRefine, new DynamicObject[]{ refinement });
-            final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement)).withRefinements(refinementsInDeclarationContext);
+            final DeclarationContext declarationContext = new DeclarationContext(Visibility.PUBLIC, new FixedDefaultDefinee(refinement), refinementsInDeclarationContext);
 
             // Update methods in existing refinements in this namespace to also see this new refine block's refinements
             for (DynamicObject existingRefinement : refinements.values()) {
