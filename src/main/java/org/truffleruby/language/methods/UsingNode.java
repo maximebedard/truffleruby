@@ -40,7 +40,7 @@ public abstract class UsingNode extends RubyNode {
 
     @TruffleBoundary
     private Map<DynamicObject, DynamicObject[]> usingModuleRecursive(DeclarationContext declarationContext, DynamicObject module) {
-        final Map<DynamicObject, DynamicObject[]> newRefinements = new HashMap<>();
+        final Map<DynamicObject, DynamicObject[]> newRefinements = new HashMap<>(declarationContext.getRefinements());
 
         // Iterate ancestors in reverse order so refinements upper in the chain have precedence
         final Deque<DynamicObject> reverseAncestors = new ArrayDeque<>();
@@ -51,15 +51,15 @@ public abstract class UsingNode extends RubyNode {
         for (DynamicObject ancestor : reverseAncestors) {
             final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(ancestor).getRefinements();
             for (Map.Entry<DynamicObject, DynamicObject> entry : refinements.entrySet()) {
-                usingRefinement(entry.getKey(), entry.getValue(), declarationContext, newRefinements);
+                usingRefinement(entry.getKey(), entry.getValue(), newRefinements);
             }
         }
 
         return newRefinements;
     }
 
-    private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, DeclarationContext declarationContext, Map<DynamicObject, DynamicObject[]> newRefinements) {
-        final DynamicObject[] refinements = declarationContext.getRefinementsFor(refinedClass);
+    private void usingRefinement(DynamicObject refinedClass, DynamicObject refinementModule, Map<DynamicObject, DynamicObject[]> newRefinements) {
+        final DynamicObject[] refinements = newRefinements.get(refinedClass);
         if (refinements == null) {
             newRefinements.put(refinedClass, new DynamicObject[]{ refinementModule });
         } else {
