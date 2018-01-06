@@ -79,8 +79,10 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     private boolean hasFullName = false;
     private String name = null;
 
+    /** Whether this is a refinement module (R), created by #refine */
     private boolean isRefinement = false;
     private boolean isOverlaid = false;
+    /** The class (C) refined by this refinement module */
     private DynamicObject refinedClass;
     /** The Module around the #refine call */
     private DynamicObject definedAt;
@@ -90,8 +92,8 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     private final ConcurrentMap<String, Object> classVariables = new ConcurrentHashMap<>();
 
     /**
-     * The refinements (calls to Module#refine) nested under/contained in this refinement namespace
-     * module (M). Represented as a map of refined classes (C) to refinement modules (M).
+     * The refinements (calls to Module#refine) nested under/contained in this namespace module (M).
+     * Represented as a map of refined classes (C) to refinement modules (R).
      */
     private final ConcurrentMap<DynamicObject, DynamicObject> refinements = new ConcurrentHashMap<>();
 
