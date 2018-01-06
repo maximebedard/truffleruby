@@ -67,10 +67,11 @@ public abstract class AddMethodNode extends RubyBaseNode {
     @TruffleBoundary
     private void addRefinedMethodEntry(DynamicObject module, InternalMethod method) {
         final MethodLookupResult result = ModuleOperations.lookupMethodCached(module, method.getName(), null);
-        if (result.getMethod() == null) {
-            addMethodInternal(module, method.withRefined(true), method.getVisibility());
+        final InternalMethod originalMethod = result.getMethod();
+        if (originalMethod == null) {
+            addMethodInternal(module, method.withRefined(true).withOriginalMethod(null), method.getVisibility());
         } else {
-            addMethodInternal(module, result.getMethod().withOriginalMethod(result.getMethod()).withRefined(true),  method.getVisibility());
+            addMethodInternal(module, originalMethod.withRefined(true).withOriginalMethod(originalMethod), method.getVisibility());
         }
     }
 
