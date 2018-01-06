@@ -1998,6 +1998,10 @@ public abstract class ModuleNodes {
 
         @Specialization
         public DynamicObject moduleUsing(VirtualFrame frame, DynamicObject self, DynamicObject refinementModule) {
+            final FrameInstance callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend();
+            if (self != RubyArguments.getSelf(callerFrame.getFrame(FrameAccess.READ_ONLY))) {
+                throw new RaiseException(coreExceptions().runtimeError("Module#using is not called on self", this));
+            }
             usingNode.executeUsing(refinementModule);
             return self;
         }
