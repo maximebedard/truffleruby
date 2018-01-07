@@ -62,6 +62,7 @@ so the DeclarationContext can be looked up only once and doesn't need to be chec
 
 During method lookup, if a *refined* method is found, the `DeclarationContext` (from the frame)
 is consulted to see if refinements apply to that specific call.
+This *refined* flag enables to only check methods which have refinements for refinements and not every module in the ancestor chain.
 The same happens for `super` calls.
 
 ## References
