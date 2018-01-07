@@ -12,7 +12,9 @@ package org.truffleruby.core;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -22,6 +24,7 @@ import org.truffleruby.builtins.CoreMethodArrayArgumentsNode;
 import org.truffleruby.core.module.ModuleNodes;
 import org.truffleruby.core.module.ModuleNodesFactory;
 import org.truffleruby.language.Visibility;
+import org.truffleruby.language.arguments.RubyArguments;
 import org.truffleruby.language.control.RaiseException;
 import org.truffleruby.language.methods.UsingNode;
 import org.truffleruby.language.methods.UsingNodeGen;
@@ -70,9 +73,10 @@ public abstract class MainNodes {
         }
 
         @TruffleBoundary
-        public boolean isCalledFromTopLevel() {
-            // TODO BJF Review for correct way to determine toplevel
-            return true;
+        private boolean isCalledFromTopLevel() {
+            final Frame callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameAccess.READ_ONLY);
+            final String name = RubyArguments.getMethod(callerFrame).getSharedMethodInfo().getName();
+            return name.equals("<main>") || name.startsWith("<top ");
         }
 
     }
