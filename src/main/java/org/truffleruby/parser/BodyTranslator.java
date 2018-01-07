@@ -721,9 +721,7 @@ public class BodyTranslator extends Translator {
 
         final SourceIndexLength enclosingSourceSection = enclosing(sourceSection, children.toArray(new RubyNode[children.size()]));
 
-        RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, methodName, argumentsAndBlock.getBlock(), argumentsAndBlock.getArguments(), argumentsAndBlock.isSplatted(), privately || ignoreVisibility, isVCall, node.isLazy(), isAttrAssign,
-                null); //getLexicalScopeNode("call method", sourceSection)
-
+        RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, methodName, argumentsAndBlock.getBlock(), argumentsAndBlock.getArguments(), argumentsAndBlock.isSplatted(), privately || ignoreVisibility, isVCall, node.isLazy(), isAttrAssign);
         RubyNode translated = Translator.withSourceSection(enclosingSourceSection, context.getCoreMethods().createCallNode(callParameters));
 
         translated = wrapCallWithLiteralBlock(argumentsAndBlock, translated);
@@ -892,8 +890,7 @@ public class BodyTranslator extends Translator {
                     method = "when_splat";
                     arguments = new RubyNode[]{ rubyExpression, NodeUtil.cloneNode(readTemp) };
                 }
-                final RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, method, null, arguments, false, true,
-                            null);
+                final RubyCallNodeParameters callParameters = new RubyCallNodeParameters(receiver, method, null, arguments, false, true);
                 final RubyNode conditionNode = Translator.withSourceSection(sourceSection, new RubyCallNode(callParameters));
 
                 // Create the if node
@@ -1667,7 +1664,7 @@ public class BodyTranslator extends Translator {
                 // Call Process.setproctitle
                 RubyNode processClass = new ObjectLiteralNode(context.getCoreLibrary().getProcessModule());
                 ret = new RubyCallNode(new RubyCallNodeParameters(processClass, "setproctitle", null,
-                        new RubyNode[]{ writeGlobalVariableNode }, false, false, null));
+                        new RubyNode[]{ writeGlobalVariableNode }, false, false));
             } else {
                 ret = writeGlobalVariableNode;
             }
@@ -2483,7 +2480,7 @@ public class BodyTranslator extends Translator {
 
             default: {
                 final SourceIndexLength sourceSection = node.getPosition();
-                final RubyCallNodeParameters callParameters = new RubyCallNodeParameters(lhs, node.getOperator(), null, new RubyNode[] { rhs }, false, true, null);
+                final RubyCallNodeParameters callParameters = new RubyCallNodeParameters(lhs, node.getOperator(), null, new RubyNode[] { rhs }, false, true);
                 final RubyNode opNode = context.getCoreMethods().createCallNode(callParameters);
                 final RubyNode ret = ((ReadConstantNode) lhs).makeWriteNode(opNode);
                 ret.unsafeSetSourceSection(sourceSection);
@@ -2729,7 +2726,7 @@ public class BodyTranslator extends Translator {
         final RubyNode moduleNode = new ObjectLiteralNode(context.getCoreLibrary().getObjectClass());
         ReadConstantNode receiver = new ReadConstantNode(moduleNode, name);
         RubyNode[] arguments = new RubyNode[] { a, b };
-        RubyCallNodeParameters parameters = new RubyCallNodeParameters(receiver, "convert", null, arguments, false, true, null);
+        RubyCallNodeParameters parameters = new RubyCallNodeParameters(receiver, "convert", null, arguments, false, true);
         return withSourceSection(sourceSection, new RubyCallNode(parameters));
     }
 

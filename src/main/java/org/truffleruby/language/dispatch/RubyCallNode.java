@@ -35,7 +35,6 @@ public class RubyCallNode extends RubyNode {
 
     @Child private RubyNode receiver;
     @Child private ProcOrNullNode block;
-    @Child private RubyNode declarationContextNode;
     @Children private final RubyNode[] arguments;
 
     private final boolean isSplatted;
@@ -66,7 +65,6 @@ public class RubyCallNode extends RubyNode {
         this.isVCall = parameters.isVCall();
         this.isSafeNavigation = parameters.isSafeNavigation();
         this.isAttrAssign = parameters.isAttrAssign();
-        this.declarationContextNode = parameters.getDeclarationContext();
 
         if (parameters.isSafeNavigation()) {
             nilProfile = ConditionProfile.createCountingProfile();
