@@ -29,7 +29,9 @@ end
 
 The `refine` block is module eval'ed into a new anonymous module `R`.
 `R` is the refinement module and contains the method definitions from the refine block after they are eval'ed.
-If the refined class `C` contains an existing method with the same name, the original method `one` in this example, the existing method will be marked as refined.
+Each method added in a refinement module also gets defined in the refined class `C` with a *refined* flag.
+If the refined class `C` contains an existing method with the same name, it is chained as the *original method* of the refined method.
+This makes it easy to account for refined methods in method lookup.
 
 Next, `refine` puts the new `R` module into module `M`'s refinements tables, which is a map of refined classes to refinement modules.
 This specific entry will contain the key `C` (refined class) and the value `R` (anonymous refinement module).
@@ -51,14 +53,19 @@ end
 ```
 
 The `using` method makes the refinements in module M active in the lexical scope that follows its call.
-It does so by appending module `M`'s refinements table entries to the caller frame's `DeclarationContext`.
+It does so by appending module `M`'s refinements to the caller frame's `DeclarationContext`.
 
 The `two` method in the `Test` module will save the frame's `DeclarationContext` when defined.
 When the `two` method is called, it will place its `DeclarationContext` into the frame so the refinements are applied to calls in the method body.
 
+Due to the lexical nature of refinements, refinements never change for a given method and
+so there the DeclarationContext can be looked up only once and doesn't need to be checked after.
+
 ## Method Dispatch
-When a refined method is called, the frame's `DeclarationContext` will be checked to see if there are active refinements.
-If an active refinement method is found for the method and receiver, the refinement method will be called.
+
+During method lookup, if a *refined* method is found, the `DeclarationContext` (from the frame)
+is consulted to see if refinements apply to that specific call.
+The same happens for `super` calls.
 
 ## References
 - [Refinements Spec](https://bugs.ruby-lang.org/projects/ruby-trunk/wiki/RefinementsSpec)
