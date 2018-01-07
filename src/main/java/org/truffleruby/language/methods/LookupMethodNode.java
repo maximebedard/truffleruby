@@ -161,7 +161,7 @@ public abstract class LookupMethodNode extends RubyNode {
     }
 
     protected MethodLookupResult doCachedLookup(VirtualFrame frame, Object self, String name) {
-        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic); // TODO BJF Fix cached lookup
+        return lookupMethodCachedWithVisibility(getContext(), frame, self, name, ignoreVisibility, onlyLookupPublic);
     }
 
     public static MethodLookupResult lookupMethodCachedWithVisibility(RubyContext context, VirtualFrame callingFrame,
