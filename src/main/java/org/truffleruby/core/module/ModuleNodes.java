@@ -1934,7 +1934,6 @@ public abstract class ModuleNodes {
     public abstract static class RefineNode extends CoreMethodArrayArgumentsNode {
 
         @Child private CallBlockNode callBlockNode = CallBlockNode.create();
-        @Child private CallDispatchHeadNode newModuleNode = CallDispatchHeadNode.createOnSelf();
 
         @Specialization
         protected DynamicObject refine(DynamicObject self, DynamicObject classToRefine, NotProvided block) {
