@@ -76,8 +76,8 @@ public abstract class AddMethodNode extends RubyBaseNode {
             addMethodToModule(module, method.withVisibility(visibility));
         }
     }
-    
-    public void addMethodToModule(final DynamicObject module, InternalMethod method) {
+
+    public void addMethodToModule(DynamicObject module, InternalMethod method) {
         Layouts.MODULE.getFields(module).addMethod(getContext(), this, method);
     }
 
