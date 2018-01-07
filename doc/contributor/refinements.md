@@ -5,30 +5,27 @@ This document provides an overview TruffleRuby's refinements implementation.
 ## `refine` Implementation
 
 This example creates a refinement `R` under the module `M` for the refined class `C`.
+The method `refine` is used inside a `Module` to create a refinement.
 
 ```ruby
 class C
   def one
-    puts "one unrefined"
+    "one unrefined"
   end
 end
-```
 
-The method `refine` is used inside a `Module` to create a refinement.
-
-```ruby
 module M
   refine C do
     # self is R, the anonymous refinement module
     def one
-      puts "one refined"
+      "one refined"
     end
   end
 end
 ```
 
 The `refine` block is module eval'ed into a new anonymous module `R`.
-`R` is the refinement module and contains the method definitions from the refine block after they are eval'ed.
+`R` is the refinement module and contains the method definitions from the refine block.
 Each method added in a refinement module also gets defined in the refined class `C` with a *refined* flag.
 If the refined class `C` contains an existing method with the same name, it is chained as the *original method* of the refined method.
 This makes it easy to account for refined methods in method lookup.
@@ -46,7 +43,7 @@ module Test
   # refinements active
 
   def two
-    C.new.one
+    C.new.one # => "one refined"
   end
 
 end
@@ -59,7 +56,7 @@ The `two` method in the `Test` module will save the frame's `DeclarationContext`
 When the `two` method is called, it will place its `DeclarationContext` into the frame so the refinements are applied to calls in the method body.
 
 Due to the lexical nature of refinements, refinements never change for a given method and
-so there the DeclarationContext can be looked up only once and doesn't need to be checked after.
+so the DeclarationContext can be looked up only once and doesn't need to be checked after.
 
 ## Method Dispatch
 
