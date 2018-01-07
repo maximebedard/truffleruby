@@ -225,11 +225,6 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
             throw new RaiseException(context.getCoreExceptions().argumentError("cyclic include detected", currentNode));
         }
 
-        includeModule(context, module);
-    }
-
-    @TruffleBoundary
-    public DynamicObject includeModule(RubyContext context, DynamicObject module) {
         SharedObjects.propagate(context, rubyModuleObject, module);
 
         // We need to include the module ancestors in reverse order for a given inclusionPoint
@@ -258,14 +253,6 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
         performIncludes(inclusionPoint, modulesToInclude);
 
         newHierarchyVersion();
-
-        if (this.getParentModule() instanceof IncludedModule) {
-            return ((IncludedModule) this.getParentModule()).getActualModule();
-        } else if (this.getParentModule() instanceof DynamicObject) {
-            return (DynamicObject) this.getParentModule();
-        } else {
-            return null;
-        }
     }
 
     public void performIncludes(ModuleChain inclusionPoint, Deque<DynamicObject> moduleAncestors) {
