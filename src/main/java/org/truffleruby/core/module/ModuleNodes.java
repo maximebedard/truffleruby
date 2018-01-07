@@ -1782,7 +1782,7 @@ public abstract class ModuleNodes {
                 moduleName = "#<Class:" + name + ">";
             } else if (fields.isRefinement()) {
                 final String refinedClass = Layouts.MODULE.getFields(fields.getRefinedClass()).getName();
-                final String refinementNamespace = Layouts.MODULE.getFields(fields.getDefinedAt()).getName();
+                final String refinementNamespace = Layouts.MODULE.getFields(fields.getRefinementNamespace()).getName();
                 moduleName = "#<refinement:" + refinedClass + "@" + refinementNamespace + ">";
             } else {
                 moduleName = fields.getName();
@@ -1835,10 +1835,10 @@ public abstract class ModuleNodes {
             final Set<DynamicObject> refinementNamespaces = new HashSet<>();
             for (DynamicObject refinementModules[] : declarationContext.getRefinements().values()) {
                 for (DynamicObject refinementModule : refinementModules) {
-                    refinementNamespaces.add(Layouts.MODULE.getFields(refinementModule).getDefinedAt());
+                    refinementNamespaces.add(Layouts.MODULE.getFields(refinementModule).getRefinementNamespace());
                 }
             }
-            final Object[] refinements = refinementNamespaces.toArray(new Object[0]);
+            final Object[] refinements = refinementNamespaces.toArray(new Object[refinementNamespaces.size()]);
             return createArray(refinements, refinements.length);
         }
 

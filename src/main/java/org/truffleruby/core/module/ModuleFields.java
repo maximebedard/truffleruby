@@ -84,7 +84,7 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
     /** The class (C) refined by this refinement module */
     private DynamicObject refinedClass;
     /** The namespace module (M) around the #refine call */
-    private DynamicObject definedAt;
+    private DynamicObject refinementNamespace;
 
     private final ConcurrentMap<String, InternalMethod> methods = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, RubyConstant> constants = new ConcurrentHashMap<>();
@@ -561,18 +561,18 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
         return isRefinement;
     }
 
-    public void setupRefinementModule(DynamicObject refinedClass, DynamicObject definedAt) {
+    public void setupRefinementModule(DynamicObject refinedClass, DynamicObject refinementNamespace) {
         this.isRefinement = true;
         this.refinedClass = refinedClass;
-        this.definedAt = definedAt;
+        this.refinementNamespace = refinementNamespace;
     }
 
     public DynamicObject getRefinedClass() {
         return refinedClass;
     }
 
-    public DynamicObject getDefinedAt() {
-        return definedAt;
+    public DynamicObject getRefinementNamespace() {
+        return refinementNamespace;
     }
 
     @Override
