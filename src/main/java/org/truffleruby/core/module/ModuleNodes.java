@@ -1045,12 +1045,7 @@ public abstract class ModuleNodes {
         @Specialization(guards = "isRubyMethod(methodObject)")
         public DynamicObject defineMethodMethod(DynamicObject module, String name, DynamicObject methodObject, NotProvided block,
                 @Cached("createCanBindMethodToModuleNode()") CanBindMethodToModuleNode canBindMethodToModuleNode) {
-            final InternalMethod method;
-            if (Layouts.MODULE.getFields(module).isRefinement()) {
-                method = Layouts.METHOD.getMethod(methodObject).withRefined(true);
-            } else {
-                method = Layouts.METHOD.getMethod(methodObject);
-            }
+            final InternalMethod method = Layouts.METHOD.getMethod(methodObject);
 
             if (!canBindMethodToModuleNode.executeCanBindMethodToModule(method, module)) {
                 final DynamicObject declaringModule = method.getDeclaringModule();
