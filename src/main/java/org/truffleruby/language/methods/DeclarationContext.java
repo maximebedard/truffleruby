@@ -131,11 +131,6 @@ public class DeclarationContext {
         }
     }
 
-    public DeclarationContext withDefaultDefinee(DefaultDefinee newDefaultDefinee) {
-        assert newDefaultDefinee != null;
-        return new DeclarationContext(visibility, newDefaultDefinee, refinements);
-    }
-
     public DeclarationContext withRefinements(Map<DynamicObject, DynamicObject[]> refinements) {
         assert refinements != null;
         return new DeclarationContext(visibility, defaultDefinee, refinements);
