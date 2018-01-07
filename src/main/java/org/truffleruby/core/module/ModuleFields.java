@@ -574,24 +574,18 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
         return isRefinement;
     }
 
-    public void setRefinement(boolean refinement) {
-        isRefinement = refinement;
+    public void setupRefinementModule(DynamicObject refinedClass, DynamicObject definedAt) {
+        this.isRefinement = true;
+        this.refinedClass = refinedClass;
+        this.definedAt = definedAt;
     }
 
     public DynamicObject getRefinedClass() {
         return refinedClass;
     }
 
-    public void setRefinedClass(DynamicObject refinedClass) {
-        this.refinedClass = refinedClass;
-    }
-
     public DynamicObject getDefinedAt() {
         return definedAt;
-    }
-
-    public void setDefinedAt(DynamicObject definedAt) {
-        this.definedAt = definedAt;
     }
 
     @Override

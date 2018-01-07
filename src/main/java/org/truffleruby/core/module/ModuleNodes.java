@@ -1978,11 +1978,9 @@ public abstract class ModuleNodes {
         }
 
         private DynamicObject newRefinementModule(DynamicObject namespace, DynamicObject classToRefine) {
-            final DynamicObject refinement = (DynamicObject) newModuleNode.call(null, getContext().getCoreLibrary().getModuleClass(), "new");
+            final DynamicObject refinement = createModule(getContext(), getEncapsulatingSourceSection(), coreLibrary().getModuleClass(), null, null, this);
             final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
-            refinementFields.setRefinement(true);
-            refinementFields.setRefinedClass(classToRefine);
-            refinementFields.setDefinedAt(namespace);
+            refinementFields.setupRefinementModule(classToRefine, namespace);
             return refinement;
         }
 
