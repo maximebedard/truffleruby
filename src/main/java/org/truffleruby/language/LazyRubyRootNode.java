@@ -82,7 +82,7 @@ public class LazyRubyRootNode extends RubyBaseRootNode implements InternalRootNo
 
             mainObject = context.getCoreLibrary().getMainObject();
             method = new InternalMethod(context, rootNode.getSharedMethodInfo(), rootNode.getSharedMethodInfo().getLexicalScope(), DeclarationContext.topLevel(context),
-                    rootNode.getSharedMethodInfo().getName(), context.getCoreLibrary().getObjectClass(), Visibility.PUBLIC, false, callTarget);
+                    rootNode.getSharedMethodInfo().getName(), context.getCoreLibrary().getObjectClass(), Visibility.PUBLIC, callTarget);
         }
 
         Object[] arguments = RubyArguments.pack(

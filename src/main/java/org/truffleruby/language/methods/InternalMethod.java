@@ -55,7 +55,8 @@ public class InternalMethod implements ObjectGraphNode {
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
-            DynamicObject proc, CallTarget callTarget) {
+            DynamicObject proc,
+            CallTarget callTarget) {
         return new InternalMethod(
                 context,
                 sharedMethodInfo,
@@ -64,7 +65,6 @@ public class InternalMethod implements ObjectGraphNode {
                 name,
                 declaringModule,
                 visibility,
-                false,
                 false,
                 proc,
                 callTarget,
@@ -79,9 +79,8 @@ public class InternalMethod implements ObjectGraphNode {
             String name,
             DynamicObject declaringModule,
             Visibility visibility,
-            boolean refined,
             CallTarget callTarget) {
-        this(context, sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, false, refined, null, callTarget, null);
+        this(context, sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, false, null, callTarget, null);
     }
 
     public InternalMethod(
@@ -93,12 +92,11 @@ public class InternalMethod implements ObjectGraphNode {
             DynamicObject declaringModule,
             Visibility visibility,
             boolean undefined,
-            boolean refined,
             DynamicObject proc,
             CallTarget callTarget,
             DynamicObject capturedBlock) {
         this(sharedMethodInfo, lexicalScope, declarationContext, name, declaringModule, visibility, undefined, false,
-                !context.getCoreLibrary().isLoaded(), refined, proc, callTarget, capturedBlock, null);
+                !context.getCoreLibrary().isLoaded(), false, proc, callTarget, capturedBlock, null);
     }
 
     private InternalMethod(

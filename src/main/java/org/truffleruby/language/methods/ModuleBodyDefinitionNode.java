@@ -69,7 +69,7 @@ public class ModuleBodyDefinitionNode extends RubyNode {
                 Visibility.PUBLIC,
                 new DeclarationContext.FixedDefaultDefinee(module),
                 RubyArguments.getDeclarationContext(frame).getRefinements());
-        return new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, declarationContext, name, module, Visibility.PUBLIC, false, false, null, callTarget, capturedBlock);
+        return new InternalMethod(getContext(), sharedMethodInfo, lexicalScope, declarationContext, name, module, Visibility.PUBLIC, false, null, callTarget, capturedBlock);
     }
 
     @TruffleBoundary
