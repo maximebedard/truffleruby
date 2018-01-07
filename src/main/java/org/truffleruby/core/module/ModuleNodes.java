@@ -1864,7 +1864,7 @@ public abstract class ModuleNodes {
                     refinements.add(refinementModule);
                 }
             }
-            final Object[] refinementsArray = refinements.toArray(new Object[0]);
+            final Object[] refinementsArray = refinements.toArray(new Object[refinements.size()]);
             return createArray(refinementsArray, refinementsArray.length);
         }
 
@@ -1942,19 +1942,18 @@ public abstract class ModuleNodes {
         @Child private CallDispatchHeadNode newModuleNode = CallDispatchHeadNode.createOnSelf();
 
         @Specialization
-        public DynamicObject refine(DynamicObject self, DynamicObject classToRefine, NotProvided block) {
+        protected DynamicObject refine(DynamicObject self, DynamicObject classToRefine, NotProvided block) {
             throw new RaiseException(coreExceptions().argumentError("no block given", this));
         }
 
+        @Specialization(guards = "!isRubyClass(classToRefine)")
+        protected DynamicObject refineNotClass(DynamicObject self, Object classToRefine, DynamicObject block) {
+            throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(classToRefine, "Class", this));
+        }
+
         @TruffleBoundary
-        @Specialization
-        public DynamicObject refine(DynamicObject namespace, DynamicObject classToRefine, DynamicObject block) {
-            // TODO BJF add block is not a proc error
-
-            if (!RubyGuards.isRubyClass(classToRefine)) {
-                throw new RaiseException(coreExceptions().typeErrorWrongArgumentType(classToRefine, "Class", this));
-            }
-
+        @Specialization(guards = "isRubyClass(classToRefine)")
+        protected DynamicObject refine(DynamicObject namespace, DynamicObject classToRefine, DynamicObject block) {
             final ConcurrentMap<DynamicObject, DynamicObject> refinements = Layouts.MODULE.getFields(namespace).getRefinements();
             final DynamicObject refinement = ConcurrentOperations.getOrCompute(refinements, classToRefine, klass -> newRefinementModule(namespace, classToRefine));
 
@@ -1981,8 +1980,6 @@ public abstract class ModuleNodes {
         private DynamicObject newRefinementModule(DynamicObject namespace, DynamicObject classToRefine) {
             final DynamicObject refinement = (DynamicObject) newModuleNode.call(null, getContext().getCoreLibrary().getModuleClass(), "new");
             final ModuleFields refinementFields = Layouts.MODULE.getFields(refinement);
-            // Layouts.MODULE.setSuperclass(refinement, klass); // We don't set superclasses on
-            // modules
             refinementFields.setRefinement(true);
             refinementFields.setRefinedClass(classToRefine);
             refinementFields.setDefinedAt(namespace);
@@ -1994,12 +1991,13 @@ public abstract class ModuleNodes {
     @CoreMethod(names = "using", required = 1, visibility = Visibility.PRIVATE)
     public abstract static class ModuleUsingNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private UsingNode usingNode = UsingNodeGen.create(null);
+        @Child private UsingNode usingNode = UsingNodeGen.create();
 
+        @TruffleBoundary
         @Specialization
-        public DynamicObject moduleUsing(VirtualFrame frame, DynamicObject self, DynamicObject refinementModule) {
-            final FrameInstance callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend();
-            if (self != RubyArguments.getSelf(callerFrame.getFrame(FrameAccess.READ_ONLY))) {
+        public DynamicObject moduleUsing(DynamicObject self, DynamicObject refinementModule) {
+            final Frame callerFrame = getContext().getCallStack().getCallerFrameIgnoringSend().getFrame(FrameAccess.READ_ONLY);
+            if (self != RubyArguments.getSelf(callerFrame)) {
                 throw new RaiseException(coreExceptions().runtimeError("Module#using is not called on self", this));
             }
             usingNode.executeUsing(refinementModule);

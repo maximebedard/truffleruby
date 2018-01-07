@@ -56,7 +56,7 @@ public abstract class MainNodes {
     @CoreMethod(names = "using", required = 1, needsSelf = false)
     public abstract static class MainUsingNode extends CoreMethodArrayArgumentsNode {
 
-        @Child private UsingNode usingNode = UsingNodeGen.create(null);
+        @Child private UsingNode usingNode = UsingNodeGen.create();
 
         @Specialization(guards = "isRubyModule(refinementModule)")
         public DynamicObject mainUsing(DynamicObject refinementModule,
