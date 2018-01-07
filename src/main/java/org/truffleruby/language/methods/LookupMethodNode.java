@@ -165,7 +165,7 @@ public abstract class LookupMethodNode extends RubyNode {
     }
 
     public static MethodLookupResult lookupMethodCachedWithVisibility(RubyContext context, VirtualFrame callingFrame,
-                                                                Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
+            Object receiver, String name, boolean ignoreVisibility, boolean onlyLookupPublic) {
         CompilerAsserts.neverPartOfCompilation("slow-path method lookup should not be compiled");
 
         if (RubyGuards.isForeignObject(receiver)) {
