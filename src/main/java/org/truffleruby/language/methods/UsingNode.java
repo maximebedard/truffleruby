@@ -31,6 +31,7 @@ public abstract class UsingNode extends RubyBaseNode {
 
     public abstract void executeUsing(DynamicObject module);
 
+    @TruffleBoundary
     @Specialization(guards = "isRubyModule(module)")
     protected void using(DynamicObject module) {
         if (RubyGuards.isRubyClass(module)) {
