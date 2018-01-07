@@ -109,7 +109,8 @@ public abstract class LookupMethodNode extends RubyNode {
                 !isRefinedProfile.profile(topMethod.isRefined())) {
             method = topMethod;
         } else {
-            method = ModuleOperations.lookupMethodUncached(metaClass, name, null);
+            final DeclarationContext declarationContext = RubyArguments.tryGetDeclarationContext(frame);
+            method = ModuleOperations.lookupMethodUncached(metaClass, name, declarationContext);
         }
 
         if (notFoundProfile.profile(method == null || method.isUndefined())) {
