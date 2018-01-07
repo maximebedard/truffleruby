@@ -81,10 +81,9 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
 
     /** Whether this is a refinement module (R), created by #refine */
     private boolean isRefinement = false;
-    private boolean isOverlaid = false;
     /** The class (C) refined by this refinement module */
     private DynamicObject refinedClass;
-    /** The Module around the #refine call */
+    /** The namespace module (M) around the #refine call */
     private DynamicObject definedAt;
 
     private final ConcurrentMap<String, InternalMethod> methods = new ConcurrentHashMap<>();
@@ -577,14 +576,6 @@ public class ModuleFields implements ModuleChain, ObjectGraphNode {
 
     public void setRefinement(boolean refinement) {
         isRefinement = refinement;
-    }
-
-    public boolean isOverlaid() {
-        return isOverlaid;
-    }
-
-    public void setOverlaid(boolean overlaid) {
-        isOverlaid = overlaid;
     }
 
     public DynamicObject getRefinedClass() {
