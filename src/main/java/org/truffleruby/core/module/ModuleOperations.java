@@ -326,7 +326,6 @@ public abstract class ModuleOperations {
                 } else {
                     return new MethodLookupResult(method, toArray(assumptions));
                 }
-
             }
         }
 
@@ -359,7 +358,6 @@ public abstract class ModuleOperations {
                 } else {
                     return method;
                 }
-
             }
         }
 
