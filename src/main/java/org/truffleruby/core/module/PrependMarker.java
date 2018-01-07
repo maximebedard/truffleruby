@@ -28,7 +28,7 @@ public class PrependMarker implements ModuleChain {
 
     @Override
     public DynamicObject getActualModule() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
