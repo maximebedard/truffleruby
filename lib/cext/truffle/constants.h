@@ -44,6 +44,7 @@ VALUE rb_tr_get_LocalJumpError(void);
 VALUE rb_tr_get_MathDomainError(void);
 VALUE rb_tr_get_EncCompatError(void);
 VALUE rb_tr_get_NameError(void);
+VALUE rb_tr_get_EncodingError(void);
 VALUE rb_tr_get_NoMemError(void);
 VALUE rb_tr_get_NoMethodError(void);
 VALUE rb_tr_get_NotImpError(void);
@@ -115,6 +116,7 @@ VALUE rb_tr_get_default_rs(void);
 #define rb_eMathDomainError rb_tr_get_MathDomainError()
 #define rb_eEncCompatError rb_tr_get_EncCompatError()
 #define rb_eNameError rb_tr_get_NameError()
+#define rb_eEncodingError rb_tr_get_EncodingError()
 #define rb_eNoMemError rb_tr_get_NoMemError()
 #define rb_eNoMethodError rb_tr_get_NoMethodError()
 #define rb_eNotImpError rb_tr_get_NotImpError()

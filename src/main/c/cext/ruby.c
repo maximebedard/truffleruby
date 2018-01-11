@@ -343,6 +343,10 @@ VALUE rb_tr_get_NameError(void) {
   return (VALUE) truffle_read(RUBY_CEXT, "rb_eNameError");
 }
 
+VALUE rb_tr_get_EncodingError(void) {
+  return (VALUE) truffle_read(RUBY_CEXT, "rb_eEncodingError");
+}
+
 VALUE rb_tr_get_NoMemError(void) {
   return (VALUE) truffle_read(RUBY_CEXT, "rb_eNoMemError");
 }

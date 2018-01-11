@@ -45,6 +45,7 @@ module RDoc
     "rb_eInterrupt"        => "Interrupt",
     "rb_eLoadError"        => "LoadError",
     "rb_eNameError"        => "NameError",
+    "rb_eEncodingError"    => "EncodingError",
     "rb_eNoMemError"       => "NoMemError",
     "rb_eNotImpError"      => "NotImpError",
     "rb_eRangeError"       => "RangeError",

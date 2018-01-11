@@ -524,6 +524,10 @@ module Truffle::CExt
     NameError
   end
 
+  def rb_eEncodingError
+    EncodingError
+  end
+
   def rb_eNoMemError
     NoMemoryError
   end
